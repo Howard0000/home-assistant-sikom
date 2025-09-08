@@ -17,6 +17,7 @@ jobs:
         uses: "hacs/action@main"
         with:
           category: "integration"
+          ignore: "brands"  # <--- LEGG TIL DENNE LINJEN
 
       - name: "Run Hassfest Action"
         uses: "home-assistant/actions/hassfest@master"
