@@ -1,5 +1,6 @@
 {
   "name": "Sikom",
   "render_readme": true,
-  "country": "NO"
+  "country": "NO",
+  "skip_brands": true
 }
