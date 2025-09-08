@@ -30,7 +30,7 @@ Den enkleste måten å installere er via HACS.
 
 1.  Gå til **HACS > Integrations** i Home Assistant.
 2.  Klikk på de tre prikkene øverst til høyre og velg **Custom repositories**.
-3.  I feltet for "Repository", lim inn `https://github.com/Howard0000/Sikom-for-Home-Assistant` og velg kategorien `Integration`. Klikk **Add**.
+3.  I feltet for "Repository", lim inn `https://github.com/Howard0000/home-assistant-sikom` og velg kategorien `Integration`. Klikk **Add**.
 4.  Du skal nå finne "Sikom" i HACS. Klikk på den og velg **Install**.
 5.  Start Home Assistant på nytt når HACS ber om det.
 
@@ -78,5 +78,6 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
 
 
