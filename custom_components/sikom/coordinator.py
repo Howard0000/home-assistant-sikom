@@ -20,9 +20,9 @@ class SikomDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, username: str, password: str,
                  device_map: dict[str, list[int]], name_map: dict[str, dict[int, str]]):
         
-        # ******** DEN MANGLENDE LINJEN ER HER ********
+        
         self.config_entry = entry
-        # *********************************************
+        
 
         super().__init__(
             hass, _LOGGER, name=f"{DOMAIN}_coordinator",
