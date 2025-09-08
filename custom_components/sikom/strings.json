@@ -1,8 +1,5 @@
 {
   "title": "Sikom",
-  "abort": {
-    "already_configured": "Denne kontoen er allerede lagt til. Gå til Innstillinger → Enheter og tjenester → Sikom → Konfigurer for å legge til eller endre enheter."
-  },
   "config": {
     "step": {
       "user": {
@@ -22,6 +19,10 @@
       "auth_failed": "Innlogging feilet. Sjekk brukernavn/passord.",
       "cannot_connect": "Kunne ikke koble til Sikom-API for å hente enhetsliste. Sjekk internett-tilkoblingen og prøv igjen.",
       "unknown": "Uventet feil. Prøv igjen."
+    },
+    "abort": {
+      "already_configured": "Denne kontoen er allerede lagt til. Gå til Innstillinger → Enheter og tjenester → Sikom → Konfigurer for å legge til eller endre enheter."
     }
   }
 }
+
