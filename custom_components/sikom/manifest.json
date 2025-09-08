@@ -5,11 +5,11 @@
   "issue_tracker": "https://github.com/Howard0000/home-assistant-sikom/issues",
   "codeowners": ["@Howard0000"],
   "requirements": [],
-  "version": "0.1.1",
+  "version": "0.1.2",
   "config_flow": true,
-  "iot_class": "cloud_polling",
-  "icon": "mdi:home-thermometer"
+  "iot_class": "cloud_polling"
 }
+
 
 
 
