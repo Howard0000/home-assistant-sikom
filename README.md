@@ -4,7 +4,7 @@ En moderne, robust og brukervennlig integrasjon for å koble Sikom-enheter (term
 
 Denne integrasjonen er en "custom component" som bruker Sikoms offisielle Connome-API. Den erstatter behovet for manuell konfigurasjon med `rest_sensor`, `rest_command` og andre YAML-baserte løsninger. Alt håndteres nå via et enkelt brukergrensesnitt.
 
-![Eksempel på termostat i Home Assistant](https://github.com/Howard0000/home-assistant-sikom/blob/main/images/Termostat%20Gang%20Komfort.png?raw=true)
+![Eksempel på Sikom-enheter i Home Assistant](images/screenshot.png)
 
 ## Funksjoner
 
@@ -74,5 +74,6 @@ Prosjektet er skrevet og vedlikeholdt av [@Howard0000](https://github.com/Howard
 Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 ## Merknad
+
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
