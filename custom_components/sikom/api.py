@@ -69,7 +69,6 @@ class SikomApi:
         except (KeyError, ValueError, TypeError):
             return None
 
-    # ******** DEN KORRIGERTE FUNKSJONEN ER HER ********
     async def get_property_value(self, device_id: int, prop: str) -> Any:
         """Hent verdi for en property, basert på fungerende REST-sensor."""
         data = await self._request("GET", f"Device/{device_id}/Property/{prop}/Value")
@@ -84,7 +83,6 @@ class SikomApi:
             if isinstance(data_node, dict):
                 return data_node.get("Value")
         return data
-    # ************************************************
 
     async def set_property_value(self, device_id: int, prop: str, value: Any) -> None:
         await self._request("POST", f"Device/{device_id}/AddProperty/{prop}/{value}")
