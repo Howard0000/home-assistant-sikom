@@ -5,6 +5,7 @@ En moderne, robust og brukervennlig integrasjon for å koble Sikom-enheter (term
 Denne integrasjonen er en "custom component" som bruker Sikoms offisielle Connome-API. Den erstatter behovet for manuell konfigurasjon med `rest_sensor`, `rest_command` og andre YAML-baserte løsninger. Alt håndteres nå via et enkelt brukergrensesnitt.
 
 ![Eksempel på Sikom-enheter i Home Assistant](images/screenshot.png)
+![Eksempel på Sikom-enheter i Home Assistant](images/screenshot1.png)
 
 ## Funksjoner
 
@@ -77,3 +78,4 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
