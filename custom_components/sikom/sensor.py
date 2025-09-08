@@ -15,7 +15,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 
 from .const import DOMAIN, SENSOR_PROPS
 
-# --- START PÅ ENDELIG, KORRIGERT KODE ---
+
 
 SENSOR_DESCRIPTIONS: dict[str, SensorEntityDescription] = {
     "power_usage": SensorEntityDescription(
@@ -119,4 +119,3 @@ class SikomMeterSensor(CoordinatorEntity, SensorEntity):
             and (self._device_id, self._prop_name) in self.coordinator.data.get("props", {})
         )
 
-# --- SLUTT PÅ ENDELIG, KORRIGERT KODE ---
