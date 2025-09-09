@@ -1,10 +1,9 @@
-[Norsk](README.md) · **English**
 
 ---
 
-![Logo](logo.png)
-
 # Sikom for Home Assistant
+
+[Norsk](README.md) · **English**
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
 
