@@ -1,6 +1,6 @@
 # Sikom for Home Assistant
 
-[Norsk](README.md) · **English**
+**Norsk** · [English](README.en.md)
 
 En moderne, robust og brukervennlig integrasjon for å koble Sikom-enheter (termostater, releer og AMS-målere) til Home Assistant.
 
@@ -80,6 +80,7 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
 
 
 
