@@ -2,6 +2,8 @@
 
 **Norsk** · [English](README.en.md)
 
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
+
 En moderne, robust og brukervennlig integrasjon for å koble Sikom-enheter (termostater, releer og AMS-målere) til Home Assistant.
 
 Denne integrasjonen er en "custom component" som bruker Sikoms offisielle Connome-API. Den erstatter behovet for manuell konfigurasjon med `rest_sensor`, `rest_command` og andre YAML-baserte løsninger. Alt håndteres nå via et enkelt brukergrensesnitt.
@@ -80,6 +82,7 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
 
 
 
