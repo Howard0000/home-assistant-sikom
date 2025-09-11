@@ -25,6 +25,20 @@ This integration is a custom component that uses Sikom's official Connome API. I
 -   **Connectivity Status:** Creates a `binary_sensor` for devices that report their online status – perfect for power outage notifications at your cabin.
 -   **Simple Configuration:** No YAML editing required.
 
+## Supported and Tested Devices
+
+This integration has been tested and confirmed to work with the following device types. Other devices may work fully or partially if they use the same data fields in the Sikom API.
+
+| Device Type | Model / Type in API | Support |
+| :--- | :--- | :--- |
+| Wireless Thermostat | `WirelessThermostat / SI-3` | Fully supported (`climate`) |
+| Wireless Thermostat | `WirelessThermostat / SI-4` | Fully supported (`climate`) |
+| Relay / Switch | `ECONode / Tech-Rel` | Fully supported (`switch`) |
+| EV Charger | `EaseeHome` | Fully supported (`switch`, `sensor`) |
+| AMS Meter | `ECOEnergyController / ECO-AMS` | Fully supported (`sensor`) |
+| Internal Relay | `GSMECOController3_Relay` | Fully supported (`switch`) |
+| Controller / Gateway | `GSMECOController3_Relay` | Supported (`binary_sensor` for connectivity) |
+
 ## Requirements
 
 -   Home Assistant 2024.x or newer.
