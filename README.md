@@ -22,6 +22,20 @@ Denne integrasjonen er en "custom component" som bruker Sikoms offisielle Connom
 -   **Energimåling:** Oppretter `sensor`-entiteter for AMS-målere med sanntids strømforbruk (W) og total energi (kWh), fullt kompatibelt med Home Assistants Energi-dashboard.
 -   **Enkel Konfigurasjon:** Ingen YAML-redigering nødvendig. Hele oppsettet skjer i Home Assistants brukergrensesnitt.
 
+## Støttede og Testede Enheter
+
+Denne integrasjonen er testet og bekreftet å fungere med følgende enhetstyper. Andre enheter kan fungere helt eller delvis hvis de bruker de samme datafeltene i Sikom-APIet.
+
+| Enhetstype | Modell / Type i API | Støtte |
+| :--- | :--- | :--- |
+| Trådløs Termostat | `WirelessThermostat / SI-3` | Fullt støttet (`climate`) |
+| Trådløs Termostat | `WirelessThermostat / SI-4` | Fullt støttet (`climate`) |
+| Rele / Bryter | `ECONode / Tech-Rel` | Fullt støttet (`switch`) |
+| Billader | `EaseeHome` | Fullt støttet (`switch`, `sensor`) |
+| AMS Måler | `ECOEnergyController / ECO-AMS` | Fullt støttet (`sensor`) |
+| Internt Rele | `GSMECOController3_Relay` | Fullt støttet (`switch`) |
+| Controller / Gateway | `GSMECOController3_Relay` | Støttet (`binary_sensor` for tilkobling) |
+
 ## Krav
 
 -   Home Assistant 2024.x eller nyere.
@@ -82,6 +96,7 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
 
 
 
