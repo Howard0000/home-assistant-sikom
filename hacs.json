@@ -1,9 +1,5 @@
 {
   "name": "Sikom",
-  "domain": "sikom",
-  "documentation": "https://github.com/Howard0000/home-assistant-sikom",
-  "repository": "https://github.com/Howard0000/home-assistant-sikom",
-  "issue_tracker": "https://github.com/Howard0000/home-assistant-sikom/issues",
-  "integration_type": "integration",
-  "authors": ["Howard0000"]
+  "render_readme": true,
+  "country": "NO"
 }
