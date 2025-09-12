@@ -1,5 +1,5 @@
 blueprint:
-  name: Sikom Varslingssentral (v2.3 – Robust bekreftelse)
+  name: Sikom Varslingssentral
   description: >
     Sender varsler ved endringer på dine Sikom-enheter. Ignorerer raske "flimringer" i status
     for å unngå falske alarmer. Brytere (f.eks. varmtvannsbereder) bekreftes med stabilitetstest
