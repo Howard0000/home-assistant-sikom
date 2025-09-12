@@ -45,7 +45,7 @@ This blueprint makes it easy to receive notifications from your **Sikom devices*
 It supports thermostats, water heater switches, and connectivity sensors (for power outages).  
 For switches, built-in logic ensures that the state change is **stable** before a notification is sent, avoiding false alarms from rapid on/off flickering.
 
-[![Import this blueprint into Home Assistant](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Howard0000/home-assistant-sikom/main/blueprints/sikom_varslingssentral.yaml)
+[![Importer blueprint til Home Assistant](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://raw.githubusercontent.com/Howard0000/home-assistant-sikom/main/blueprints/sikom_varslingssentral.yaml)
 
 ## Requirements
 
