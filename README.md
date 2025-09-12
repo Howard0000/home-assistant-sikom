@@ -42,7 +42,7 @@ Dette blueprintet gjør det enkelt å motta varsler fra dine **Sikom-enheter** i
 Det støtter både termostater, varmtvannsbereder/brytere og tilkoblingssensorer (for strømbrudd).  
 For brytere er det bygget inn logikk som sikrer at endringen er **stabil** før varselet sendes, slik at du slipper falske alarmer ved raske av/på-flimringer.
 
-[![Importer blueprint til Home Assistant](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Howard0000/home-assistant-sikom/main/blueprints/sikom_varslingssentral.yaml)
+[![Importer blueprint til Home Assistant](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://raw.githubusercontent.com/Howard0000/home-assistant-sikom/main/blueprints/sikom_varslingssentral.yaml)
 
 ## Krav
 
@@ -104,6 +104,7 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
 
 
 
