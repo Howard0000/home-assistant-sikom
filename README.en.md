@@ -39,6 +39,14 @@ This integration has been tested and confirmed to work with the following device
 | Internal Relay | `GSMECOController3_Relay` | Fully supported (`switch`) |
 | Controller / Gateway | `GSMECOController3_Relay` | Supported (`binary_sensor` for connectivity) |
 
+## 📥 Import blueprint directly into Home Assistant
+
+This blueprint makes it easy to receive notifications from your **Sikom devices** in Home Assistant.  
+It supports thermostats, water heater switches, and connectivity sensors (for power outages).  
+For switches, built-in logic ensures that the state change is **stable** before a notification is sent, avoiding false alarms from rapid on/off flickering.
+
+[![Import this blueprint into Home Assistant](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://raw.githubusercontent.com/Howard0000/home-assistant-sikom/main/blueprints/sikom_varslingssentral.yaml)
+
 ## Requirements
 
 -   Home Assistant 2024.x or newer.
