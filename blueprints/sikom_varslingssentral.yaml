@@ -1,0 +1,188 @@
+blueprint:
+  name: Sikom Varslingssentral (v2.3 – Robust bekreftelse)
+  description: >
+    Sender varsler ved endringer på dine Sikom-enheter. Ignorerer raske "flimringer" i status
+    for å unngå falske alarmer. Brytere (f.eks. varmtvannsbereder) bekreftes med stabilitetstest
+    før varsel sendes.
+  domain: automation
+
+  input:
+    # --- Input for termostater ---
+    climate_entities:
+      name: Termostater som skal overvåkes
+      description: Velg alle Sikom-termostatene du vil ha varsler for.
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: climate
+
+    critical_temperature:
+      name: Kritisk temperaturgrense
+      description: Sett temperaturen som skal utløse et "kritisk temperatur"-varsel.
+      default: 5
+      selector:
+        number:
+          min: -10
+          max: 15
+          step: 1
+          unit_of_measurement: "°C"
+
+    # --- Input for brytere ---
+    switch_entity:
+      name: Bryter som skal overvåkes (valgfri)
+      description: Velg Sikom-bryteren (f.eks. varmtvannsbereder) du vil ha varsler for.
+      default: {}
+      selector:
+        entity:
+          filter:
+            - domain: switch
+
+    # --- Input for strømbrudd ---
+    connection_sensor:
+      name: Tilkoblingssensor for strømbrudd (valgfri)
+      description: Velg "Tilkobling"-sensoren (fra en Controller/Gateway) for varsel ved strømbrudd.
+      default: {}
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class: connectivity
+
+    # --- Generelle inputs ---
+    notify_device:
+      name: Varslingsenhet
+      description: Velg telefonen eller enheten som skal motta varslene.
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+
+    location_name:
+      name: Navn på sted (f.eks. Hytta, Hjemme)
+      description: Dette navnet brukes i tittelen på varslene.
+      default: "Hytta"
+
+# --- Triggere ---
+trigger:
+  # Kritisk temperatur (med varighet)
+  - platform: numeric_state
+    id: kritisk_temp
+    entity_id: !input climate_entities
+    attribute: current_temperature
+    below: !input critical_temperature
+    for: "00:01:00"
+
+  # Endring av modus (preset_mode) – liten debounce
+  - platform: state
+    id: klima_preset
+    entity_id: !input climate_entities
+    attribute: preset_mode
+    for: "00:00:05"
+
+  # Endring av måltemperatur (temperature) – liten debounce
+  - platform: state
+    id: klima_target
+    entity_id: !input climate_entities
+    attribute: temperature
+    for: "00:00:05"
+
+  # Bryter – TRIGGER UMIDDELBART (robusthet håndteres i action)
+  - platform: state
+    id: varmtvann_endret
+    entity_id: !input switch_entity
+
+  # Strømbrudd (tilkobling on -> off) – med varighet
+  - platform: state
+    id: strombrudd
+    entity_id: !input connection_sensor
+    from: "on"
+    to: "off"
+    for: "00:01:00"
+
+# --- Handlinger ---
+action:
+  - variables:
+      climate_entities: !input climate_entities
+      switch_entity: !input switch_entity
+      connection_sensor: !input connection_sensor
+      location_name: !input location_name
+
+  - choose:
+
+      # ---------------------------------------------------------
+      # BRYTER: Bekreft stabil endring før varsel (anti-flimring)
+      # ---------------------------------------------------------
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'varmtvann_endret' and switch_entity is not none and switch_entity != '' and trigger.entity_id == switch_entity }}"
+        sequence:
+          # Lagre gammel og ny tilstand
+          - variables:
+              _old: "{{ trigger.from_state.state if trigger.from_state else 'unknown' }}"
+              _new: "{{ trigger.to_state.state if trigger.to_state else 'unknown' }}"
+
+          # Vent opptil 75 sekunder for at den evt. hopper tilbake til _old
+          - wait_for_trigger:
+              - platform: state
+                entity_id: !input switch_entity
+                to: "{{ _old }}"
+            timeout: "00:01:15"
+            continue_on_timeout: true
+
+          # Kun send varsel dersom:
+          # 1) den IKKE hoppet tilbake (timeout), og
+          # 2) den fortsatt står i den nye tilstanden (_new)
+          - condition: template
+            value_template: >
+              {{ (wait is defined and wait.completed == false) and is_state(switch_entity, _new) }}
+
+          # Liten ekstra buffer
+          - delay: "00:00:02"
+
+          # Send varsel
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ location_name }}: Endring registrert"
+            message: "💧 {{ state_attr(switch_entity, 'friendly_name') or switch_entity }} ble {{ 'slått PÅ' if _new == 'on' else 'slått AV' }}."
+            data:
+              tag: "sikom_switch_status_{{ switch_entity | replace('.', '_') }}"
+
+      # ---------------------------------------------------------
+      # KLIMA: Kritisk temp / preset / måltemperatur
+      # ---------------------------------------------------------
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.entity_id in climate_entities }}"
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ location_name }}: Endring registrert"
+            message: >-
+              {% set entity = trigger.to_state %}
+              {% set room_name = entity.name %}
+              {% if trigger.id == 'kritisk_temp' %}
+              ❄️ Kritisk temperatur! Temperaturen i {{ room_name }} er nå {{ entity.attributes.current_temperature }}°C.
+              {% elif trigger.id == 'klima_preset' %}
+              🔄 Modus for {{ room_name }} er endret til '{{ entity.attributes.preset_mode }}'.
+              {% elif trigger.id == 'klima_target' %}
+              🌡️ Måltemperatur for {{ room_name }} er endret til {{ entity.attributes.temperature }}°C.
+              {% endif %}
+
+      # ---------------------------------------------------------
+      # STRØMBRUDD
+      # ---------------------------------------------------------
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'strombrudd' }}"
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ location_name }}: 🚨 KRITISK VARSEL"
+            message: "⚠️ STRØMBRUDD registrert! Tilkoblingen til '{{ trigger.to_state.name | replace(' Tilkobling', '') }}' ble brutt."
+
+mode: parallel
+max: 10
