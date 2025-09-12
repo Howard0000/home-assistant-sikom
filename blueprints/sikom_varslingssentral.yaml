@@ -30,9 +30,8 @@ blueprint:
 
     # --- Input for brytere ---
     switch_entity:
-      name: Bryter som skal overvåkes (valgfri)
+      name: Bryter som skal overvåkes
       description: Velg Sikom-bryteren (f.eks. varmtvannsbereder) du vil ha varsler for.
-      default: {}
       selector:
         entity:
           filter:
@@ -40,9 +39,8 @@ blueprint:
 
     # --- Input for strømbrudd ---
     connection_sensor:
-      name: Tilkoblingssensor for strømbrudd (valgfri)
+      name: Tilkoblingssensor for strømbrudd
       description: Velg "Tilkobling"-sensoren (fra en Controller/Gateway) for varsel ved strømbrudd.
-      default: {}
       selector:
         entity:
           filter:
