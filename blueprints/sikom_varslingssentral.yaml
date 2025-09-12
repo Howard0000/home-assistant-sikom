@@ -5,6 +5,7 @@ blueprint:
     for å unngå falske alarmer. Brytere (f.eks. varmtvannsbereder) bekreftes med stabilitetstest
     før varsel sendes.
   domain: automation
+  source_url: https://raw.githubusercontent.com/Howard0000/home-assistant-sikom/main/blueprints/sikom_varslingssentral.yaml
 
   input:
     # --- Input for termostater ---
@@ -32,7 +33,7 @@ blueprint:
     switch_entity:
       name: Bryter som skal overvåkes (valgfri)
       description: Velg Sikom-bryteren (f.eks. varmtvannsbereder) du vil ha varsler for.
-      default: {}
+      default: ""
       selector:
         entity:
           filter:
@@ -42,7 +43,7 @@ blueprint:
     connection_sensor:
       name: Tilkoblingssensor for strømbrudd (valgfri)
       description: Velg "Tilkobling"-sensoren (fra en Controller/Gateway) for varsel ved strømbrudd.
-      default: {}
+      default: ""
       selector:
         entity:
           filter:
@@ -66,7 +67,7 @@ blueprint:
 # --- Triggere ---
 trigger:
   # Kritisk temperatur (med varighet)
-  - platform: numeric_state
+  - trigger: numeric_state
     id: kritisk_temp
     entity_id: !input climate_entities
     attribute: current_temperature
@@ -74,26 +75,26 @@ trigger:
     for: "00:01:00"
 
   # Endring av modus (preset_mode) – liten debounce
-  - platform: state
+  - trigger: state
     id: klima_preset
     entity_id: !input climate_entities
     attribute: preset_mode
     for: "00:00:05"
 
   # Endring av måltemperatur (temperature) – liten debounce
-  - platform: state
+  - trigger: state
     id: klima_target
     entity_id: !input climate_entities
     attribute: temperature
     for: "00:00:05"
 
   # Bryter – TRIGGER UMIDDELBART (robusthet håndteres i action)
-  - platform: state
+  - trigger: state
     id: varmtvann_endret
     entity_id: !input switch_entity
 
   # Strømbrudd (tilkobling on -> off) – med varighet
-  - platform: state
+  - trigger: state
     id: strombrudd
     entity_id: !input connection_sensor
     from: "on"
@@ -115,7 +116,11 @@ action:
       # ---------------------------------------------------------
       - conditions:
           - condition: template
-            value_template: "{{ trigger.id == 'varmtvann_endret' and switch_entity is not none and switch_entity != '' and trigger.entity_id == switch_entity }}"
+            value_template: >
+              {{ trigger.id == 'varmtvann_endret'
+                 and switch_entity is not none
+                 and switch_entity != ''
+                 and trigger.entity_id == switch_entity }}
         sequence:
           # Lagre gammel og ny tilstand
           - variables:
@@ -124,7 +129,7 @@ action:
 
           # Vent opptil 75 sekunder for at den evt. hopper tilbake til _old
           - wait_for_trigger:
-              - platform: state
+              - trigger: state
                 entity_id: !input switch_entity
                 to: "{{ _old }}"
             timeout: "00:01:15"
