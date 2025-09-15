@@ -57,11 +57,10 @@ For switches, built-in logic ensures that the state change is **stable** before 
 
 The easiest way to install is via HACS.
 
-1.  Go to **HACS > Integrations** in Home Assistant.
-2.  Search for **"Sikom"** and install it.
-3.  Restart Home Assistant when prompted.
-
-*(If the integration is not yet in the default HACS store, you can add it as a "Custom repository" as described in the HACS documentation).*
+1.  Open HACS → Integrations in Home Assistant.
+2.  Search for “Sikom”.
+3.  Select the integration and click Install.
+4.  Restart Home Assistant if prompted.
 
 ## Configuration
 
