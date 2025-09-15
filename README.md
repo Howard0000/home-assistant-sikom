@@ -54,13 +54,10 @@ For brytere er det bygget inn logikk som sikrer at endringen er **stabil** før 
 
 Den enkleste måten å installere er via HACS.
 
-1.  Gå til **HACS > Integrations** i Home Assistant.
-2.  Klikk på de tre prikkene øverst til høyre og velg **Custom repositories**.
-3.  I feltet for "Repository", lim inn `https://github.com/Howard0000/home-assistant-sikom` og velg kategorien `Integration`. Klikk **Add**.
-4.  Du skal nå finne "Sikom" i HACS. Klikk på den og velg **Install**.
-5.  Start Home Assistant på nytt når HACS ber om det.
-
-*(Når integrasjonen er offisielt lagt til i HACS, kan steg 2 og 3 hoppes over, og du kan søke den opp direkte).*
+1.  Åpne HACS → Integrations i Home Assistant.
+2.  Søk etter Sikom.
+3.  Velg integrasjonen og klikk Install.
+4.  Start Home Assistant på nytt hvis du blir bedt om det.
 
 ## Konfigurasjon
 
@@ -104,6 +101,7 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
 
 
 
