@@ -1,5 +1,5 @@
 {
   "name": "Sikom",
   "render_readme": true,
-  "country": "NO"
+  "country": ["NO", "SE", "FI", "DK", "IS"]
 }
