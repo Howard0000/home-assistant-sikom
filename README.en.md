@@ -29,15 +29,17 @@ This integration is a custom component that uses Sikom's official Connome API. I
 
 This integration has been tested and confirmed to work with the following device types. Other devices may work fully or partially if they use the same data fields in the Sikom API.
 
-| Device Type | Model / Type in API | Support |
-| :--- | :--- | :--- |
-| Wireless Thermostat | `WirelessThermostat / SI-3` | Fully supported (`climate`) |
-| Wireless Thermostat | `WirelessThermostat / SI-4` | Fully supported (`climate`) |
-| Relay / Switch | `ECONode / Tech-Rel` | Fully supported (`switch`) |
-| EV Charger | `EaseeHome` | Fully supported (`switch`, `sensor`) |
-| AMS Meter | `ECOEnergyController / ECO-AMS` | Fully supported (`sensor`) |
-| Internal Relay | `GSMECOController3_Relay` | Fully supported (`switch`) |
-| Controller / Gateway | `GSMECOController3_Relay` | Supported (`binary_sensor` for connectivity) |
+| Device type          | Model / Type in API                          | Support |
+|----------------------|-----------------------------------------------|---------|
+| Wireless Thermostat  | WirelessThermostat / SI-3                     | Fully supported (climate) |
+| Wireless Thermostat  | WirelessThermostat / SI-4                     | Fully supported (climate, sensor for measured temperature) |
+| Eco Glamox Receiver  | ECOGlamoxPlug (Wireless Thermostat Glamox)    | Fully supported (climate, sensor for measured temperature) |
+| Relay / Switch       | ECONode / Tech-Rel                            | Fully supported (switch) |
+| EV Charger           | EaseeHome                                     | Fully supported (switch, sensor) |
+| AMS Meter            | ECOEnergyController / ECO-AMS                 | Fully supported (sensor) |
+| Internal Relay       | GSMECOController3_Relay                       | Fully supported (switch) |
+| Controller / Gateway | GSMECOController3_Relay                       | Supported (binary_sensor for connection) |
+
 
 ## 📥 Import blueprint directly into Home Assistant
 
