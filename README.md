@@ -13,14 +13,23 @@ Denne integrasjonen er en "custom component" som bruker Sikoms offisielle Connom
 
 ## Funksjoner
 
--   **Automatisk Enhetsdeteksjon:** Finner automatisk alle termostater, releer og AMS-målere på din Sikom-konto.
--   **Klimakontroll:** Oppretter native `climate`-entiteter for termostatene dine.
-    -   Viser nåværende temperatur.
-    -   Lar deg enkelt bytte mellom "Komfort" og "Sparing"-modus (presets).
-    -   Lar deg justere måltemperaturen for både komfort- og sparingsmodus direkte fra Home Assistant.
--   **Brytere:** Oppretter `switch`-entiteter for enheter som varmtvannsberedere og releer.
--   **Energimåling:** Oppretter `sensor`-entiteter for AMS-målere med sanntids strømforbruk (W) og total energi (kWh), fullt kompatibelt med Home Assistants Energi-dashboard.
--   **Enkel Konfigurasjon:** Ingen YAML-redigering nødvendig. Hele oppsettet skjer i Home Assistants brukergrensesnitt.
+- **Automatisk Enhetsdeteksjon:** Finner automatisk alle termostater, releer og AMS-målere på din Sikom-konto.  
+
+- **Klimakontroll:** Oppretter native `climate`-entiteter for termostatene dine.  
+  - Viser nåværende temperatur.  
+  - Lar deg enkelt bytte mellom "Komfort" og "Sparing"-modus (presets).  
+  - Lar deg justere måltemperaturen for både komfort- og sparingsmodus direkte fra Home Assistant.  
+  - **Målt temperatur:** For enheter som rapporterer faktisk temperatur (f.eks. *SI-4* og *Eco Glamox Receiver*) opprettes det nå automatisk en ekstra sensor:  
+    - `sensor.[navn]_malt_temperatur`  
+    - Denne sensoren blir lagt i samme **Enhet** som termostaten i Home Assistant.  
+    - Eksempel: *Stue* → inneholder både `climate.stue` og `sensor.stue_malt_temperatur`.  
+
+- **Brytere:** Oppretter `switch`-entiteter for enheter som varmtvannsberedere og releer.  
+
+- **Energimåling:** Oppretter `sensor`-entiteter for AMS-målere med sanntids strømforbruk (W) og total energi (kWh), fullt kompatibelt med Home Assistants Energi-dashboard.  
+
+- **Enkel Konfigurasjon:** Ingen YAML-redigering nødvendig. Hele oppsettet skjer i Home Assistants brukergrensesnitt.  
+
 
 ## Støttede og Testede Enheter
 
@@ -103,6 +112,7 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
 
 
 
