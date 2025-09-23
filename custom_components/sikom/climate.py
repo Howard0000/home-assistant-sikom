@@ -44,9 +44,13 @@ class SikomClimate(CoordinatorEntity, ClimateEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
+        # Felles enhets-ID for å gruppere climate + målt temperatur-sensor i samme "Enhet"
         return DeviceInfo(
-            identifiers={(DOMAIN, f"climate_{self._device_id}")}, name=self.name,
-            manufacturer="Sikom", model="Thermostat")
+            identifiers={(DOMAIN, f"device_{self._device_id}")},
+            name=self.name,
+            manufacturer="Sikom",
+            model="Thermostat"
+        )
 
     def _get_prop(self, prop: str) -> str | None:
         return self.coordinator.data.get("props", {}).get((self._device_id, prop))
