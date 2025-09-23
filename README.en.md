@@ -14,16 +14,25 @@ This integration is a custom component that uses Sikom's official Connome API. I
 ![Example of Sikom devices in Home Assistant](images/screenshot.png)
 ![Example of Sikom devices in Home Assistant](images/screenshot1.png)
 
-## Features
+## Features (English)
 
--   **Automatic Device Detection:** Automatically discovers all thermostats, relays, and AMS meters on your Sikom account.
--   **Intelligent Sensor Creation:** Only creates sensors for the data a device actually reports, avoiding "unavailable" entities.
--   **Climate Control:** Creates native `climate` entities for your thermostats with full functionality.
--   **Switches:** Creates `switch` entities for devices like water heaters and relays.
--   **Energy Monitoring:** Creates sensors for AMS meters that are fully compatible with Home Assistant's Energy dashboard.
--   **Support for Easee EV Charger:** Also integrates Easee chargers connected via Sikom, providing both on/off control (`switch`) and sensors for power consumption and voltage.
--   **Connectivity Status:** Creates a `binary_sensor` for devices that report their online status – perfect for power outage notifications at your cabin.
--   **Simple Configuration:** No YAML editing required.
+- **Automatic Device Detection:** Automatically discovers all thermostats, relays, and AMS meters on your Sikom account.  
+
+- **Climate Control:** Creates native `climate` entities for your thermostats.  
+  - Displays the current temperature.  
+  - Allows you to easily switch between "Comfort" and "Eco" presets.  
+  - Lets you adjust the target temperature for both comfort and eco modes directly from Home Assistant.  
+  - **Measured Temperature:** For devices that report actual temperature (e.g. *SI-4* and *Eco Glamox Receiver*), an extra sensor is automatically created:  
+    - `sensor.[name]_malt_temperatur`  
+    - This sensor is placed in the same **Device** as the thermostat in Home Assistant.  
+    - Example: *Living Room* → contains both `climate.living_room` and `sensor.living_room_malt_temperatur`.  
+
+- **Switches:** Creates `switch` entities for devices like water heaters and relays.  
+
+- **Energy Monitoring:** Creates `sensor` entities for AMS meters with real-time power usage (W) and total energy (kWh), fully compatible with Home Assistant’s Energy dashboard.  
+
+- **Easy Configuration:** No YAML editing required. Setup is handled entirely through the Home Assistant UI.  
+
 
 ## Supported and Tested Devices
 
