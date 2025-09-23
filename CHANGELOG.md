@@ -1,33 +1,34 @@
 # Changelog
 
-Alle vesentlige endringer i dette prosjektet dokumenteres her.
+All notable changes to this project will be documented here.
 
 ## [v1.0.3] – 2025-09-23
 ### Fixed
-- Fjernet dupliserte "tomt skall"-enheter for termostater.  
-- Nå kombineres `climate` og tilhørende `målt temperatur`-sensor under samme enhet i Home Assistant.  
+- Removed duplicate "empty shell" devices for thermostats.  
+- Thermostat (`climate`) and related `*_malt_temperatur` sensor are now grouped under the same device in Home Assistant.  
 
 ---
 
 ## [v1.0.2] – 2025-09-22
 ### Added
-- Ny `*_malt_temperatur` sensor for enheter som eksponerer målt temperatur i API-et (f.eks. SI-4, Eco Glamox Receiver).
-- Støtte for Eco Glamox Receiver (`ECOGlamoxPlug`).
+- New `*_malt_temperatur` sensor for devices exposing measured temperature in the API (e.g. SI-4, Eco Glamox Receiver).
+- Support for Eco Glamox Receiver (`ECOGlamoxPlug`).
 
 ### Improved
-- Sensorer arver nå "friendly name" fra sine parent-enheter (f.eks. *Stue Målt temperatur*) for enklere identifisering i Home Assistant.
+- Sensors now inherit "friendly names" from their parent devices (e.g. *Stue Målt temperatur*) for easier identification in Home Assistant.
 
 ---
 
 ## [v1.0.1] – 2025-09-20
 ### Changed
-- Oppdatert `README.md` med engelsk installasjonsveiledning.
-- Forbedret installasjonsbeskrivelse for HACS (søk etter **Sikom → Install**).
+- Updated `README.md` with English installation guide.
+- Improved installation instructions for HACS (search for **Sikom → Install**).
 
 ---
 
 ## [v1.0.0] – 2025-09-15
 ### Initial Release
-- Første HACS-release.
-- Oppdatert `manifest.json`.
+- First HACS release.
+- Updated `manifest.json`.
+
 
