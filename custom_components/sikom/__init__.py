@@ -6,13 +6,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import (
-    DOMAIN, CONF_USERNAME, CONF_PASSWORD, CONF_CLIMATE_IDS, 
+    DOMAIN, CONF_USERNAME, CONF_PASSWORD, CONF_CLIMATE_IDS,
     CONF_SWITCH_IDS, CONF_SENSOR_IDS
 )
 from .coordinator import SikomDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[str] = ["climate", "switch", "sensor", "binary_sensor"]
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Sett opp Sikom fra en config entry."""
@@ -42,9 +43,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Valgfri service for manuell refresh (nyttig til feilsøking/automatisering)
+    async def _handle_manual_refresh(call):
+        try:
+            await coordinator.client.async_refresh_gateway(force=True)
+            await coordinator.async_request_refresh()
+        except Exception as err:
+            _LOGGER.debug("Manuell refresh feilet: %s", err)
+
+    hass.services.async_register(DOMAIN, "refresh_gateway", _handle_manual_refresh)
+
     entry.add_update_listener(async_reload_entry)
-    
     return True
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Fjern Sikom-integrasjonen."""
@@ -52,6 +63,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok
+
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Last inn config entry på nytt når options endres."""
