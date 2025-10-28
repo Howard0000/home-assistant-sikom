@@ -36,20 +36,27 @@ Denne integrasjonen er en "custom component" som bruker Sikoms offisielle Connom
 - **Enkel Konfigurasjon:** Ingen YAML-redigering nødvendig. Hele oppsettet skjer i Home Assistants brukergrensesnitt.  
 
 
-## Støttede og Testede Enheter
+### 🧩 Støttede og testede enheter
 
-Denne integrasjonen er testet og bekreftet å fungere med følgende enhetstyper. Andre enheter kan fungere helt eller delvis hvis de bruker de samme datafeltene i Sikom-APIet.
+Denne integrasjonen er testet og bekreftet å fungere med følgende enheter og sentraler.  
+Andre modeller kan også fungere dersom de bruker de samme datafeltene i Sikom-API-et.
 
-| Enhetstype           | Modell / Type i API                          | Støtte |
-|----------------------|-----------------------------------------------|--------|
-| Trådløs Termostat    | WirelessThermostat / SI-3                     | Fullt støttet (climate) |
-| Trådløs Termostat    | WirelessThermostat / SI-4                     | Fullt støttet (climate, sensor for målt temperatur) |
-| Eco Glamox Receiver  | ECOGlamoxPlug (Wireless Thermostat Glamox)    | Fullt støttet (climate, sensor for målt temperatur) |
-| Rele / Bryter        | ECONode / Tech-Rel                            | Fullt støttet (switch, temperatursensorer for relé 1 og 2) |
-| Billader             | EaseeHome                                     | Fullt støttet (switch, sensor) |
-| AMS Måler            | ECOEnergyController / ECO-AMS                 | Fullt støttet (sensor) |
-| Internt Rele         | GSMECOController3_Relay                       | Fullt støttet (switch) |
-| Controller / Gateway | GSMECOController3_Relay                       | Støttet (binary_sensor for tilkobling) |
+| Enhetstype / kategori | Modell / Type i API | Støtte og funksjonalitet |
+|------------------------|--------------------|---------------------------|
+| **Trådløs termostat** | `WirelessThermostat / SI-3` | ✅ Full støtte – climate (termostat) |
+| **Trådløs termostat** | `WirelessThermostat / SI-4` | ✅ Full støtte – climate + sensor for målt temperatur |
+| **Eco Glamox Receiver** | `ECOGlamoxPlug (Wireless Thermostat Glamox)` | ✅ Full støtte – climate + sensor for målt temperatur |
+| **Varmtvannsbereder / Bryter** | `ECONode / Tech-Rel` | ✅ Full støtte – switch |
+| **Billader** | `EaseeHome` | ✅ Full støtte – switch og sensor |
+| **AMS-måler** | `ECOEnergyController / ECO-AMS` | ✅ Full støtte – sensorer for strøm, spenning og energi |
+| **Internrelé i Eco Controller 3 (LTE-M)** | `GSMECOController3_Relay / GEC-III` | ✅ Full støtte – switch + temperatursensor(er) for relé 1 og 2 (hvis prober er tilkoblet) |
+| **Sentralenhet (Gateway)** | `GSMECOController3_Relay / GEC-III (LTE-M)` | ⚙️ Delvis støtte – viser tilkoblingsstatus (`binary_sensor`) og *AppView Heartbeat* (oppdateres ca. hvert 5. minutt) |
+| **Sentralenhet (Gateway)** | `ECOComfort2 4G` | ⚙️ Delvis støtte – viser tilkoblingsstatus (`binary_sensor`) og *AppView Heartbeat* (oppdateres ca. hvert 5. minutt) |
+
+💡 **Tips:**  
+Hvis du ikke ser sensoren *AppView Heartbeat* umiddelbart, kan du søke den opp i Home Assistant (`sensor.appview_heartbeat`) og legge den manuelt til i dashbordet.  
+Denne sensoren viser at integrasjonen kommuniserer med Sikom-skyen og oppdateres automatisk hvert 5.–6. minutt.
+
 
 
 ## 📥 Importer blueprint direkte til Home Assistant
@@ -117,6 +124,7 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
 
 
 
