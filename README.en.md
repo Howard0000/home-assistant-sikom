@@ -116,3 +116,17 @@ This project is written and maintained by [@Howard0000](https://github.com/Howar
 
 ## License
 This project is licensed under the [MIT License](LICENSE).
+
+---
+
+### ⚠️ Disclaimer
+
+This integration is an independent community project using the official Sikom public API for data access and control.  
+It does **not** replace the Sikom mobile app and has no deeper control capabilities beyond what the API provides.
+
+Use at your own risk.  
+For heating control — especially in cabins or remote properties — a separate and independent **frost protection** system is strongly recommended.  
+Neither the developer of this integration nor Sikom Connect AS can be held responsible for damage, malfunction, or financial loss resulting from misconfiguration, network issues, or API changes.
+
+The integration is intended as a monitoring and automation tool within Home Assistant, not as a primary safety or control system.
+
