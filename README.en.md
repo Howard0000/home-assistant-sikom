@@ -38,20 +38,27 @@ This integration is a custom component that uses Sikom's official Connome API. I
 - **Easy Configuration:** No YAML editing required. Setup is handled entirely through the Home Assistant UI.  
 
 
-## Supported and Tested Devices
+### 🧩 Supported and Tested Devices
 
-This integration has been tested and confirmed to work with the following device types. Other devices may work fully or partially if they use the same data fields in the Sikom API.
+This integration has been tested and confirmed to work with the following devices and controllers.  
+Other models may also function partially or fully if they use the same data fields in the Sikom API.
 
-| Device type          | Model / Type in API                          | Support |
-|----------------------|-----------------------------------------------|---------|
-| Wireless Thermostat  | WirelessThermostat / SI-3                     | Fully supported (climate) |
-| Wireless Thermostat  | WirelessThermostat / SI-4                     | Fully supported (climate, sensor for measured temperature) |
-| Eco Glamox Receiver  | ECOGlamoxPlug (Wireless Thermostat Glamox)    | Fully supported (climate, sensor for measured temperature) |
-| Relay / Switch       | ECONode / Tech-Rel                            | Fully supported (switch, temperature probes for relay 1 & 2) |
-| EV Charger           | EaseeHome                                     | Fully supported (switch, sensor) |
-| AMS Meter            | ECOEnergyController / ECO-AMS                 | Fully supported (sensor) |
-| Internal Relay       | GSMECOController3_Relay                       | Fully supported (switch) |
-| Controller / Gateway | GSMECOController3_Relay                       | Supported (binary_sensor for connection) |
+| Device type / category | Model / Type in API | Support and functionality |
+|-------------------------|--------------------|---------------------------|
+| **Wireless Thermostat** | `WirelessThermostat / SI-3` | ✅ Fully supported – climate (thermostat) |
+| **Wireless Thermostat** | `WirelessThermostat / SI-4` | ✅ Fully supported – climate + sensor for measured temperature |
+| **Eco Glamox Receiver** | `ECOGlamoxPlug (Wireless Thermostat Glamox)` | ✅ Fully supported – climate + measured temperature sensor |
+| **Water Heater / Relay** | `ECONode / Tech-Rel` | ✅ Fully supported – switch |
+| **EV Charger** | `EaseeHome` | ✅ Fully supported – switch and sensor |
+| **AMS Power Meter** | `ECOEnergyController / ECO-AMS` | ✅ Fully supported – sensors for power, voltage and energy |
+| **Internal Relay in Eco Controller 3 (LTE-M)** | `GSMECOController3_Relay / GEC-III` | ✅ Fully supported – switch + temperature sensors for relay 1 and 2 (if probes connected) |
+| **Main Controller (Gateway)** | `GSMECOController3_Relay / GEC-III (LTE-M)` | ⚙️ Partial support – connection status (`binary_sensor`) and *AppView Heartbeat* (updates approx. every 5 minutes) |
+| **Main Controller (Gateway)** | `ECOComfort2 4G` | ⚙️ Partial support – connection status (`binary_sensor`) and *AppView Heartbeat* (updates approx. every 5 minutes) |
+
+💡 **Tip:**  
+If you don’t see the *AppView Heartbeat* sensor immediately, search for it in Home Assistant (`sensor.appview_heartbeat`) and add it manually to your dashboard.  
+This sensor confirms that the integration is communicating with the Sikom cloud and updates automatically every 5–6 minutes.
+
 
 
 ## 📥 Import blueprint directly into Home Assistant
