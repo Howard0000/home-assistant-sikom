@@ -43,7 +43,7 @@ Andre modeller kan også fungere dersom de bruker de samme datafeltene i Sikom-A
 
 | Enhetstype / kategori | Modell / Type i API | Støtte og funksjonalitet |
 |------------------------|--------------------|---------------------------|
-| **Trådløs termostat** | `WirelessThermostat / SI-3` | ✅ Full støtte – climate (termostat) |
+| **Trådløs termostat** | `WirelessThermostat / SI-3` | ✅ Full støtte – climate + sensor for målt temperatur |
 | **Trådløs termostat** | `WirelessThermostat / SI-4` | ✅ Full støtte – climate + sensor for målt temperatur |
 | **Eco Glamox Receiver** | `ECOGlamoxPlug (Wireless Thermostat Glamox)` | ✅ Full støtte – climate + sensor for målt temperatur |
 | **Varmtvannsbereder / Bryter** | `ECONode / Tech-Rel` | ✅ Full støtte – switch |
@@ -124,6 +124,7 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
 
 
 
