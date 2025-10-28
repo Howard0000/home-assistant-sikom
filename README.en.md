@@ -45,7 +45,7 @@ Other models may also function partially or fully if they use the same data fiel
 
 | Device type / category | Model / Type in API | Support and functionality |
 |-------------------------|--------------------|---------------------------|
-| **Wireless Thermostat** | `WirelessThermostat / SI-3` | ✅ Fully supported – climate (thermostat) |
+| **Wireless Thermostat** | `WirelessThermostat / SI-3` | ✅ Fully supported – climate + sensor for measured temperature |
 | **Wireless Thermostat** | `WirelessThermostat / SI-4` | ✅ Fully supported – climate + sensor for measured temperature |
 | **Eco Glamox Receiver** | `ECOGlamoxPlug (Wireless Thermostat Glamox)` | ✅ Fully supported – climate + measured temperature sensor |
 | **Water Heater / Relay** | `ECONode / Tech-Rel` | ✅ Fully supported – switch |
