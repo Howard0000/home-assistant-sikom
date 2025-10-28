@@ -19,10 +19,15 @@ Denne integrasjonen er en "custom component" som bruker Sikoms offisielle Connom
   - Viser nåværende temperatur.  
   - Lar deg enkelt bytte mellom "Komfort" og "Sparing"-modus (presets).  
   - Lar deg justere måltemperaturen for både komfort- og sparingsmodus direkte fra Home Assistant.  
-  - **Målt temperatur:** For enheter som rapporterer faktisk temperatur (f.eks. *SI-4* og *Eco Glamox Receiver*) opprettes det nå automatisk en ekstra sensor:  
+  - **Målt temperatur:** For enheter som rapporterer faktisk temperatur (f.eks. *SI-4*, *Eco Glamox Receiver* og *Eco Controller 3*) opprettes det automatisk en ekstra sensor:  
     - `sensor.[navn]_malt_temperatur`  
     - Denne sensoren blir lagt i samme **Enhet** som termostaten i Home Assistant.  
     - Eksempel: *Stue* → inneholder både `climate.stue` og `sensor.stue_malt_temperatur`.  
+  - For *Eco Controller 3* med kablede temperaturfølere opprettes én temperatursensor per relé (f.eks. `Temperatur Relé 1` og `Temperatur Relé 2`).  
+
+- **Automatisk oppdatering:**  
+  Integrasjonen sender et *AppView*-kall til Sikom API omtrent hvert **5.–6. minutt**, slik at verdier for temperatur, effekt og status holdes oppdatert uten at Sikom-appen må åpnes.
+ 
 
 - **Brytere:** Oppretter `switch`-entiteter for enheter som varmtvannsberedere og releer.  
 
@@ -40,7 +45,7 @@ Denne integrasjonen er testet og bekreftet å fungere med følgende enhetstyper.
 | Trådløs Termostat    | WirelessThermostat / SI-3                     | Fullt støttet (climate) |
 | Trådløs Termostat    | WirelessThermostat / SI-4                     | Fullt støttet (climate, sensor for målt temperatur) |
 | Eco Glamox Receiver  | ECOGlamoxPlug (Wireless Thermostat Glamox)    | Fullt støttet (climate, sensor for målt temperatur) |
-| Rele / Bryter        | ECONode / Tech-Rel                            | Fullt støttet (switch) |
+| Rele / Bryter        | ECONode / Tech-Rel                            | Fullt støttet (switch, temperatursensorer for relé 1 og 2) |
 | Billader             | EaseeHome                                     | Fullt støttet (switch, sensor) |
 | AMS Måler            | ECOEnergyController / ECO-AMS                 | Fullt støttet (sensor) |
 | Internt Rele         | GSMECOController3_Relay                       | Fullt støttet (switch) |
@@ -112,6 +117,7 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
+
 
 
 
