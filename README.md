@@ -125,6 +125,21 @@ Dette prosjektet er lisensiert under [MIT License](LICENSE).
 
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet eller vedlikeholdt av Sikom AS. All bruk skjer på eget ansvar.
 
+---
+
+### ⚠️ Ansvarsfraskrivelse
+
+Denne integrasjonen er utviklet som et tredjeparts-prosjekt og benytter Sikom sitt offentlige API for å hente og sende data.  
+Den erstatter **ikke** Sikom-appen og har ingen direkte kontroll over enhetene utover det som tillates via API-et.
+
+All bruk skjer på eget ansvar.  
+For styring av varme, spesielt i fritidsboliger, anbefales det alltid et separat og uavhengig system for **frostsikring**.  
+Verken utvikler av integrasjonen eller Sikom Connect AS kan holdes ansvarlig for skader, feilfunksjon eller økonomiske tap som følge av feilkonfigurasjon, nettverksproblemer eller uforutsette API-endringer.
+
+Integrasjonen er ment som et hjelpemiddel for overvåking og automatisering i Home Assistant – ikke som primær styringsløsning for kritiske funksjoner.
+
+
+
 
 
 
