@@ -69,15 +69,19 @@ class SikomApi:
         except (KeyError, ValueError, TypeError):
             return None
 
+    # --- NY FUNKSJON ---
+    async def async_refresh_appview(self, gateway_id: int) -> None:
+        """Trigger AppView-refresh i skyen (ikke kall oftere enn hvert ~5 min)."""
+        await self._request("GET", f"AppView/v4.0/{gateway_id}")
+    # --- SLUTT PÅ NY FUNKSJON ---
+
     async def get_property_value(self, device_id: int, prop: str) -> Any:
         """Hent verdi for en property, basert på fungerende REST-sensor."""
         data = await self._request("GET", f"Device/{device_id}/Property/{prop}/Value")
         if isinstance(data, dict):
-            # Se etter "scalar_result" FØRST, slik fasiten viser
             if (data_node := data.get("Data")) and isinstance(data_node, dict):
                 if (scalar_val := data_node.get("scalar_result")) is not None:
                     return scalar_val
-            # Fallback til de andre metodene i tilfelle API-et er inkonsistent
             if (val := self._pick(data, "Value", "value")) is not None:
                 return val
             if isinstance(data_node, dict):

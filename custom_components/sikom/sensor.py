@@ -1,11 +1,10 @@
-# Fil: custom_components/sikom/sensor.py
-
 from __future__ import annotations
 from typing import Any
 import re
 
 from homeassistant.components.sensor import (
-    SensorEntity, SensorDeviceClass, SensorStateClass, SensorEntityDescription)
+    SensorEntity, SensorDeviceClass, SensorStateClass, SensorEntityDescription
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     UnitOfPower, UnitOfEnergy, UnitOfElectricCurrent, UnitOfElectricPotential,
@@ -15,6 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import DOMAIN, SENSOR_PROPS
 
@@ -43,7 +43,6 @@ SENSOR_DESCRIPTIONS: dict[str, SensorEntityDescription] = {
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE, state_class=SensorStateClass.MEASUREMENT),
 }
 
-# --- Ny: beskrivelse for målt temperatur-sensor ---
 MEASURED_TEMP_DESC = SensorEntityDescription(
     key="measured_temp",
     name="Målt temperatur",
@@ -65,10 +64,12 @@ PROPERTY_ALIASES = {
 }
 
 def _to_float_safe(val: Any) -> float | None:
-    if val is None: return None
+    if val is None:
+        return None
     s = str(val).strip()
     match = re.search(r"[-+]?\d+(?:[.,]\d+)?", s)
-    if not match: return None
+    if not match:
+        return None
     try:
         return float(match.group(0).replace(",", "."))
     except (ValueError, TypeError):
@@ -80,7 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     entities: list[SensorEntity] = []
     created_sensors: set[tuple[int, str]] = set()
 
-    # --- AMS / energimåler-sensorer (uendret) ---
+    # AMS / energimåler-sensorer
     for device_id in coordinator.device_map.get("sensor", []):
         for prop_name in SENSOR_PROPS:
             raw_value = coordinator.data.get("props", {}).get((device_id, prop_name))
@@ -91,7 +92,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
                     entities.append(SikomMeterSensor(coordinator, device_id, description, prop_name))
                     created_sensors.add((device_id, internal_key))
 
-    # --- Ny: Målt temperatur-sensor for climate-enheter ---
+    # Målt temperatur for climate-enheter
     for device_id in coordinator.device_map.get("climate", []):
         raw_temp = coordinator.data.get("props", {}).get((device_id, "temperature"))
         if _to_float_safe(raw_temp) is None:
@@ -101,6 +102,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             continue
         entities.append(SikomMeasuredTempSensor(coordinator, device_id))
         created_sensors.add(key)
+
+    # Temperatur fra relé (switch) – NYTT
+    for device_id in coordinator.device_map.get("switch", []):
+        raw_temp = coordinator.data.get("props", {}).get((device_id, "temperature"))
+        if _to_float_safe(raw_temp) is None:
+            continue
+        key = (device_id, "switch_temp")
+        if key in created_sensors:
+            continue
+        entities.append(SikomSwitchTempSensor(coordinator, device_id))
+        created_sensors.add(key)
+
+    # AppView-heartbeat (diagnostikk)
+    entities.append(SikomAppViewHeartbeatSensor(coordinator, entry.entry_id))
 
     async_add_entities(entities)
 
@@ -112,14 +127,16 @@ class SikomMeterSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._device_id = device_id
         self.entity_description = description
-        self._prop_name = prop_name  # originalt API-felt
+        self._prop_name = prop_name
 
         device_name = coordinator.name_map.get("sensor", {}).get(device_id) or f"Sikom Meter {device_id}"
         self._attr_unique_id = f"sikom_sensor_{device_id}_{description.key}"
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"sensor_{device_id}")},
-            name=device_name, manufacturer="Sikom", model="Energy Meter"
+            name=device_name,
+            manufacturer="Sikom",
+            model="Energy Meter",
         )
 
     @property
@@ -134,13 +151,9 @@ class SikomMeterSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def available(self) -> bool:
-        return (
-            super().available
-            and (self._device_id, self._prop_name) in self.coordinator.data.get("props", {})
-        )
+        return super().available and (self._device_id, self._prop_name) in self.coordinator.data.get("props", {})
 
 
-# --- Ny: Målt temperatur-sensor knyttet til samme "Enhet" som climate ---
 class SikomMeasuredTempSensor(CoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
     entity_description = MEASURED_TEMP_DESC
@@ -149,13 +162,10 @@ class SikomMeasuredTempSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._device_id = device_id
 
-        # Hent visningsnavn fra climate (fallback til generisk)
-        base_name = coordinator.name_map.get("climate", {}).get(device_id) \
-            or f"Sikom Thermostat {device_id}"
+        base_name = coordinator.name_map.get("climate", {}).get(device_id) or f"Sikom Thermostat {device_id}"
         self._base_name = base_name
         self._attr_unique_id = f"sikom_measured_temp_{device_id}"
 
-        # Viktig: samme identifiers som climate → samme "Enhet"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"device_{device_id}")},
             name=base_name,
@@ -175,3 +185,51 @@ class SikomMeasuredTempSensor(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         return super().available and (self._device_id, "temperature") in self.coordinator.data.get("props", {})
+
+
+class SikomSwitchTempSensor(CoordinatorEntity, SensorEntity):
+    """Temperatur fra reléets probe (Eco Controller 3)."""
+    _attr_has_entity_name = True
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator, device_id: int) -> None:
+        super().__init__(coordinator)
+        self._device_id = device_id
+        base_name = coordinator.name_map.get("switch", {}).get(device_id) or f"Sikom Switch {device_id}"
+        self._base_name = base_name
+        self._attr_name = f"{base_name} Temperatur"
+        self._attr_unique_id = f"sikom_switch_temp_{device_id}"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"switch_{device_id}")},
+            name=base_name,
+            manufacturer="Sikom",
+            model="Eco Relay",
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        raw = self.coordinator.data.get("props", {}).get((self._device_id, "temperature"))
+        return _to_float_safe(raw)
+
+    @property
+    def available(self) -> bool:
+        return super().available and (self._device_id, "temperature") in self.coordinator.data.get("props", {})
+
+
+# AppView-heartbeat (diagnostikk: oppdateres KUN ved nudge hver ~5–6 min)
+class SikomAppViewHeartbeatSensor(CoordinatorEntity, SensorEntity):
+    _attr_has_entity_name = True
+    _attr_name = "AppView Heartbeat"
+    _attr_icon = "mdi:pulse"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator, entry_id: str) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry_id}_appview_heartbeat"
+
+    @property
+    def native_value(self) -> str | None:
+        # Viser tidspunkt for SISTE AppView-nudge (5–6 min-raten). Endrer seg ikke ved minutt-poll.
+        return self.coordinator.data.get("_appview_heartbeat")
