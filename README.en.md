@@ -22,11 +22,15 @@ This integration is a custom component that uses Sikom's official Connome API. I
   - Displays the current temperature.  
   - Allows you to easily switch between "Comfort" and "Eco" presets.  
   - Lets you adjust the target temperature for both comfort and eco modes directly from Home Assistant.  
-  - **Measured Temperature:** For devices that report actual temperature (e.g. *SI-4* and *Eco Glamox Receiver*), an extra sensor is automatically created:  
-    - `sensor.[name]_malt_temperatur`  
-    - This sensor is placed in the same **Device** as the thermostat in Home Assistant.  
-    - Example: *Living Room* → contains both `climate.living_room` and `sensor.living_room_malt_temperatur`.  
+  - **Measured Temperature:** For devices that report actual temperature (e.g. *SI-4*, *Eco Glamox Receiver*, and *Eco Controller 3*), an additional sensor is automatically created:  
+    - `sensor.[name]_measured_temperature`  
+    - This sensor appears in the same **Device** as the thermostat in Home Assistant.  
+    - Example: *Living Room* → contains both `climate.living_room` and `sensor.living_room_measured_temperature`.  
+  - For **Eco Controller 3 (4G)** with connected wired temperature probes, one temperature sensor per relay (e.g., `Temperature Relay 1` and `Temperature Relay 2`) is automatically added.
 
+- **Automatic API Refresh:**  
+  The integration now triggers a background *AppView* refresh every **5–6 minutes**, ensuring temperatures and device statuses stay updated without needing to open the Sikom mobile app.
+  
 - **Switches:** Creates `switch` entities for devices like water heaters and relays.  
 
 - **Energy Monitoring:** Creates `sensor` entities for AMS meters with real-time power usage (W) and total energy (kWh), fully compatible with Home Assistant’s Energy dashboard.  
@@ -43,7 +47,7 @@ This integration has been tested and confirmed to work with the following device
 | Wireless Thermostat  | WirelessThermostat / SI-3                     | Fully supported (climate) |
 | Wireless Thermostat  | WirelessThermostat / SI-4                     | Fully supported (climate, sensor for measured temperature) |
 | Eco Glamox Receiver  | ECOGlamoxPlug (Wireless Thermostat Glamox)    | Fully supported (climate, sensor for measured temperature) |
-| Relay / Switch       | ECONode / Tech-Rel                            | Fully supported (switch) |
+| Relay / Switch       | ECONode / Tech-Rel                            | Fully supported (switch, temperature probes for relay 1 & 2) |
 | EV Charger           | EaseeHome                                     | Fully supported (switch, sensor) |
 | AMS Meter            | ECOEnergyController / ECO-AMS                 | Fully supported (sensor) |
 | Internal Relay       | GSMECOController3_Relay                       | Fully supported (switch) |
