@@ -1,16 +1,18 @@
 blueprint:
   name: Sikom Varslingssentral
   description: >
-    Varsler bare ekte endringer på Sikom-enheter og ignorerer pulser/flimring.
-    • Bryter: Forrige status må ha vart minst vinduet + reverseringsvindu
-    • Klima (preset/setpoint): Kun reverseringsvindu (HA har ikke pålitelig varighet per attributt)
-    • Varsel sendes bare når sluttstatus ≠ startstatus og endringen sto stabilt hele vinduet.
+    Varsler ekte endringer for Sikom – og skiller mellom NETTUTFALL (connection) og STRØMBRUDD (230V).
+    • Nettutfall: connection (on/off) med stabiliseringsvindu (unngå falske alarmer)
+    • Strømbrudd: spenningssensor (under terskel en periode, friskmelding med hysterese)
+    • Klima/switch: varsler på endringer med stabiliseringsvinduer og debounce
   domain: automation
   source_url: https://raw.githubusercontent.com/Howard0000/home-assistant-sikom/main/blueprints/sikom_varslingssentral.yaml
 
   input:
+    # --- Klima ---
     climate_entities:
-      name: Termostater som skal overvåkes
+      name: Termostater som skal overvåkes (valgfritt)
+      default: []
       selector:
         entity:
           multiple: true
@@ -27,46 +29,8 @@ blueprint:
           step: 1
           unit_of_measurement: "°C"
 
-    switch_entity:
-      name: Bryter som skal overvåkes (valgfri)
-      default: ""
-      selector:
-        entity:
-          filter:
-            - domain: switch
-
-    connection_sensor:
-      name: Tilkoblingssensor (valgfri)
-      default: ""
-      selector:
-        entity:
-          filter:
-            - domain: binary_sensor
-              device_class: connectivity
-
-    notify_device:
-      name: Varslingsenhet (mobile_app)
-      selector:
-        device:
-          filter:
-            - integration: mobile_app
-
-    location_name:
-      name: Navn på sted
-      default: "Hytta"
-
-    switch_window_min:
-      name: Stabiliseringsvindu – Bryter (minutter)
-      default: 2
-      selector:
-        number:
-          min: 1
-          max: 10
-          step: 1
-          unit_of_measurement: min
-
     preset_window_sec:
-      name: Stabiliseringsvindu – preset_mode (sekunder)
+      name: Stabiliseringsvindu – preset_mode (sek)
       default: 15
       selector:
         number:
@@ -76,7 +40,7 @@ blueprint:
           unit_of_measurement: s
 
     temp_window_sec:
-      name: Stabiliseringsvindu – setpoint (sekunder)
+      name: Stabiliseringsvindu – setpoint (sek)
       default: 15
       selector:
         number:
@@ -85,13 +49,157 @@ blueprint:
           step: 1
           unit_of_measurement: s
 
+    # --- Bryter ---
+    switch_entity:
+      name: Bryter som skal overvåkes (valgfri)
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: switch
+
+    switch_window_min:
+      name: Stabiliseringsvindu – Bryter (min)
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 10
+          step: 1
+          unit_of_measurement: min
+
+    # --- Nett (connection) ---
+    connection_sensor:
+      name: Tilkoblingssensor – NETT (påkrevd for nettutfall)
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class: connectivity
+
+    connection_offline_min:
+      name: Nettutfall – offline i minst (min)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 120
+          step: 1
+          unit_of_measurement: min
+
+    connection_online_min:
+      name: Nett tilbake – online i minst (min)
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 60
+          step: 1
+          unit_of_measurement: min
+
+    # --- Strøm (spenning) ---
+    voltage_entity:
+      name: Spenningssensor – STRØM (valgfri)
+      description: "For ekte strømbrudd: velg f.eks. 'Sikom ECO Energy Controller Spenning'"
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: voltage
+
+    threshold_v:
+      name: Strømbrudd – terskel (V)
+      default: 50
+      selector:
+        number:
+          min: 10
+          max: 230
+          step: 1
+          unit_of_measurement: V
+
+    hysteresis_v:
+      name: Strøm tilbake – hysterese (V)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 30
+          step: 1
+          unit_of_measurement: V
+
+    fail_for_min:
+      name: Strømbrudd – under terskel i (min)
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 60
+          step: 1
+          unit_of_measurement: min
+
+    back_for_min:
+      name: Strøm tilbake – over terskel i (min)
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 60
+          step: 1
+          unit_of_measurement: min
+
+    back_threshold_v:
+      name: Strøm tilbake – terskel (V)
+      default: 55
+      selector:
+        number:
+          min: 10
+          max: 230
+          step: 1
+          unit_of_measurement: V
+
+    # --- Felles ---
+    notify_device:
+      name: Varslingsenhet (mobile_app)
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+
+    location_name:
+      name: Stedsnavn
+      default: "Hytta"
+
     debug_mode:
-      name: Debug (skriv til Loggbok hvorfor endring ble varslet/ignorert)
+      name: Debug (skriv hvorfor varsel/ignorert til Loggbok)
       default: false
       selector:
         boolean: {}
 
+mode: parallel
+max: 10
+
+variables:
+  climate_entities: !input climate_entities
+  switch_entity: !input switch_entity
+  connection_sensor: !input connection_sensor
+  voltage_entity: !input voltage_entity
+  location_name: !input location_name
+  sw_min: !input switch_window_min
+  p_sec: !input preset_window_sec
+  t_sec: !input temp_window_sec
+  offline_min: !input connection_offline_min
+  online_min: !input connection_online_min
+  thr_v: !input threshold_v
+  hyst_v: !input hysteresis_v
+  fail_min: !input fail_for_min
+  back_min: !input back_for_min
+  back_thr: !input back_threshold_v
+  debug_mode: !input debug_mode
+
 trigger:
+  # --- Klima: sikkerhet ---
   - trigger: numeric_state
     id: kritisk_temp
     entity_id: !input climate_entities
@@ -99,6 +207,7 @@ trigger:
     below: !input critical_temperature
     for: "00:01:00"
 
+  # --- Klima: endringer ---
   - trigger: state
     id: klima_preset
     entity_id: !input climate_entities
@@ -109,29 +218,69 @@ trigger:
     entity_id: !input climate_entities
     attribute: temperature
 
+  # --- Bryter ---
   - trigger: state
     id: varmtvann_endret
     entity_id: !input switch_entity
 
+  # --- NETTUTFALL (connection) ---
   - trigger: state
-    id: strombrudd
+    id: nett_off
     entity_id: !input connection_sensor
     from: "on"
     to: "off"
-    for: "00:01:00"
+    for:
+      minutes: !input connection_offline_min
+
+  - trigger: state
+    id: nett_on
+    entity_id: !input connection_sensor
+    from: "off"
+    to: "on"
+    for:
+      minutes: !input connection_online_min
+
+  # --- STRØMBRUDD (voltage) ---
+  - trigger: numeric_state
+    id: power_fail
+    entity_id: !input voltage_entity
+    below: !input threshold_v
+    for:
+      minutes: !input fail_for_min
+
+  - trigger: numeric_state
+    id: power_back
+    entity_id: !input voltage_entity
+    above: !input back_threshold_v
+    for:
+      minutes: !input back_for_min
 
 action:
-  - variables:
-      climate_entities: !input climate_entities
-      switch_entity: !input switch_entity
-      connection_sensor: !input connection_sensor
-      location_name: !input location_name
-      sw_min: !input switch_window_min
-      p_sec: !input preset_window_sec
-      t_sec: !input temp_window_sec
-      debug_mode: !input debug_mode
-
   - choose:
+
+      # ---------- KLIMA: kritisk temperatur ----------
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'kritisk_temp' }}"
+        sequence:
+          - variables:
+              _eid: "{{ trigger.entity_id }}"
+              _name: "{{ state_attr(_eid, 'friendly_name') or _eid }}"
+              _temp: "{{ state_attr(_eid, 'current_temperature') }}"
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ location_name }}: 🚨 Lav temperatur"
+            message: "⚠️ {{ _name }} har nå {{ _temp }}°C, under kritisk grense."
+          - if:
+              - condition: template
+                value_template: "{{ debug_mode }}"
+            then:
+              - action: logbook.log
+                data:
+                  name: "Sikom Debug"
+                  message: "Kritisk temperatur varslet for {{ _name }} ({{ _temp }}°C)."
+                  entity_id: "{{ _eid }}"
 
       # ---------- BRYTER ----------
       - conditions:
@@ -340,16 +489,50 @@ action:
             title: "{{ location_name }}: Endring registrert"
             message: "🌡️ Måltemperatur for {{ state_attr(_eid, 'friendly_name') or _eid }} er endret til {{ _new }}°C."
 
+      # ---------- NETTUTFALL ----------
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ trigger.id in ['nett_off','nett_on'] and (connection_sensor | length) > 0 }}
+        sequence:
+          - variables:
+              nettnavn: "{{ state_attr(connection_sensor, 'friendly_name') or connection_sensor }}"
+          - choose:
+              - conditions: "{{ trigger.id == 'nett_off' }}"
+                sequence:
+                  - device_id: !input notify_device
+                    domain: mobile_app
+                    type: notify
+                    title: "{{ location_name }}: 🚨 NETTUTFALL"
+                    message: "⚠️ Tilkoblingen til {{ nettnavn }} er OFFLINE (≥{{ offline_min }} min)."
+              - conditions: "{{ trigger.id == 'nett_on' }}"
+                sequence:
+                  - device_id: !input notify_device
+                    domain: mobile_app
+                    type: notify
+                    title: "{{ location_name }}: Nett tilbake"
+                    message: "✅ Tilkoblingen til {{ nettnavn }} er ONLINE igjen (≥{{ online_min }} min)."
+
       # ---------- STRØMBRUDD ----------
       - conditions:
           - condition: template
-            value_template: "{{ trigger.id == 'strombrudd' }}"
+            value_template: >
+              {{ trigger.id in ['power_fail','power_back'] and (voltage_entity | length) > 0 }}
         sequence:
-          - device_id: !input notify_device
-            domain: mobile_app
-            type: notify
-            title: "{{ location_name }}: 🚨 KRITISK VARSEL"
-            message: "⚠️ STRØMBRUDD registrert! Tilkoblingen til '{{ trigger.to_state.name | replace(' Tilkobling', '') }}' ble brutt."
-
-mode: parallel
-max: 10
+          - variables:
+              volt_navn: "{{ state_attr(voltage_entity, 'friendly_name') or voltage_entity }}"
+          - choose:
+              - conditions: "{{ trigger.id == 'power_fail' }}"
+                sequence:
+                  - device_id: !input notify_device
+                    domain: mobile_app
+                    type: notify
+                    title: "{{ location_name }}: 🚨 STRØMBRUDD"
+                    message: "⚠️ {{ volt_navn }} < {{ thr_v }} V i ≥{{ fail_min }} min."
+              - conditions: "{{ trigger.id == 'power_back' }}"
+                sequence:
+                  - device_id: !input notify_device
+                    domain: mobile_app
+                    type: notify
+                    title: "{{ location_name }}: Strøm tilbake"
+                    message: "✅ {{ volt_navn }} > {{ back_thr }} V i ≥{{ back_min }} min."
