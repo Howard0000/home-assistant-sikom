@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented here.
 
+## [1.0.8] – 2025-12-31
+### 🔐 Hotfix – Sikom API klientvalidering
+
+### 🇳🇴 Norsk
+Denne versjonen retter en feil i v1.0.7 der enkelte API-kall kunne feile med  
+`403 Forbidden` på grunn av nye krav til klient-identifikasjon hos Sikom / Connome BPAPI.
+
+**Endringer:**
+- API-kall etterligner nå en standard nettleser (User-Agent / HTTP-headers)
+- Løser 403-feil på `VerifyCredentials`, `AddProperty` og `TurnOn/TurnOff`
+- Ingen endringer i konfigurasjon, entiteter eller eksisterende oppsett
+
+---
+
+### 🇬🇧 English
+This release fixes an issue in v1.0.7 where some API calls could fail with  
+`403 Forbidden` due to new client validation requirements in the Sikom / Connome BPAPI.
+
+**Changes:**
+- API requests now emulate a standard web browser (User-Agent / HTTP headers)
+- Resolves 403 errors for `VerifyCredentials`, `AddProperty`, and `TurnOn/TurnOff`
+- No changes to configuration, entities, or existing setups
+
 ## [1.0.7] – 2025-12-30  
 ### 🔐 Fikset – Autentisering og stabilitet mot Sikom API  
 Denne versjonen gjenoppretter stabil tilkobling mot **Sikom / Connome BPAPI** etter endringer på serversiden som kunne føre til `401/403 Authentication failed`.
