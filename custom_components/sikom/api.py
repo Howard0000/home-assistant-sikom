@@ -9,10 +9,11 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER = logging.getLogger(__name__)
 
-BASE_URL = "https://api.connome.com/api/"
+BASE_URL = "https://api.connome.com/api"
 
-# Headers som etterligner en "vanlig" klient (curl/browser-ish)
-DEFAULT_HEADERS = {
+# Headers som etterligner en "vanlig" klient (browser-ish).
+# Dette har vist seg nødvendig pga. strengere WAF-regler hos BPAPI (403 uten disse).
+DEFAULT_HEADERS: Dict[str, str] = {
     "User-Agent": "Mozilla/5.0",
     "Accept": "application/json,text/plain,*/*",
     "Accept-Language": "nb-NO,nb;q=0.9,en;q=0.8",
@@ -26,7 +27,7 @@ class ApiError(Exception):
 
 
 class AuthError(ApiError):
-    """Autentiseringsfeil."""
+    """Autentiserings-/tilgangsfeil."""
 
 
 class SikomApi:
@@ -39,7 +40,8 @@ class SikomApi:
         # Fjern skjulte tegn (copy/paste) og normaliser passord
         password = (password or "").strip()
 
-        # Bekreftet: enkelte kontoer krever '!!!' som suffix
+        # Bekreftet: enkelte kontoer krever '!!!' som suffix.
+        # Integrasjonen legger til dette automatisk for brukeren.
         self._password = f"{password}!!!" if not password.endswith("!!!") else password
 
         self._session: Optional[aiohttp.ClientSession] = None
@@ -50,11 +52,7 @@ class SikomApi:
             self._session = async_get_clientsession(self._hass)
 
     async def login(self) -> None:
-        """
-        Verifiserer legitimasjon mot BPAPI.
-
-        Bruker VerifyCredentials-endepunktet (robust auth-sjekk).
-        """
+        """Verifiserer legitimasjon mot BPAPI (VerifyCredentials)."""
         self._ensure_session()
         self._auth = aiohttp.BasicAuth(self._username, self._password)
         await self._request("GET", "VerifyCredentials")
@@ -70,12 +68,12 @@ class SikomApi:
 
         parsed_devices = [self._parse_device(dev) for dev in device_list]
 
-        seen_ids = set()
+        seen_ids: set[int] = set()
         unique_devices: List[Dict[str, Any]] = []
         for device in parsed_devices:
-            if device and device["id"] not in seen_ids:
+            if device and int(device["id"]) not in seen_ids:
                 unique_devices.append(device)
-                seen_ids.add(device["id"])
+                seen_ids.add(int(device["id"]))
 
         _LOGGER.info("Autodeteksjon fant %d unike enheter.", len(unique_devices))
         return unique_devices
@@ -139,7 +137,7 @@ class SikomApi:
         await self._request("POST", f"Device/{device_id}/AddProperty/{prop}/{value}")
 
     async def set_property_with_confirm(
-        self, device_id: int, prop: str, value: Any, **kwargs
+        self, device_id: int, prop: str, value: Any, **kwargs: Any
     ) -> bool:
         try:
             await self.set_property_value(device_id, prop, value)
@@ -169,21 +167,38 @@ class SikomApi:
         return []
 
     async def _request(self, method: str, path: str) -> Any:
+        """Utfører et API-kall mot BPAPI."""
         self._ensure_session()
-        url = BASE_URL + path.lstrip("/")
+        url = f"{BASE_URL}/{path.lstrip('/')}"
 
         auth = self._auth or aiohttp.BasicAuth(self._username, self._password)
+
+        # Kopi av headers pr kall (for å unngå utilsiktet mutering globalt)
+        headers = dict(DEFAULT_HEADERS)
 
         try:
             async with self._session.request(
                 method,
                 url,
                 auth=auth,
-                headers=DEFAULT_HEADERS,
+                headers=headers,
                 timeout=aiohttp.ClientTimeout(total=30),
             ) as resp:
                 if resp.status in (401, 403):
-                    raise AuthError(f"Authentication failed (status {resp.status})")
+                    # Prøv å hente BPAPI-melding om tilgjengelig
+                    msg = f"Authentication/Access failed (status {resp.status})"
+                    try:
+                        data = await resp.json(content_type=None)
+                        bp_msg = (
+                            data.get("Data", {}).get("bpapi_message")
+                            if isinstance(data, dict)
+                            else None
+                        )
+                        if bp_msg:
+                            msg = f"{msg}: {bp_msg}"
+                    except Exception:
+                        pass
+                    raise AuthError(msg)
 
                 resp.raise_for_status()
                 return await resp.json(content_type=None)
