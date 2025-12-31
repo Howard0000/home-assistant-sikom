@@ -186,21 +186,33 @@ variables:
   connection_sensor: !input connection_sensor
   voltage_entity: !input voltage_entity
   location_name: !input location_name
+
   sw_min: !input switch_window_min
   p_sec: !input preset_window_sec
   t_sec: !input temp_window_sec
+
   offline_min: !input connection_offline_min
   online_min: !input connection_online_min
+
   thr_v: !input threshold_v
   hyst_v: !input hysteresis_v
   fail_min: !input fail_for_min
   back_min: !input back_for_min
   back_thr: !input back_threshold_v
+
   debug_mode: !input debug_mode
+
+  # Robust tolkning av spenning (unngår falske triggere på unknown/unavailable)
+  volt_state: "{{ states(voltage_entity) if voltage_entity else 'unknown' }}"
+  volt_ok: >
+    {{ voltage_entity
+       and volt_state not in ['unknown','unavailable','none','']
+       and (volt_state | float(none)) is not none }}
+  volt_v: "{{ (volt_state | float(0)) if volt_ok else 0 }}"
 
 trigger:
   # --- Klima: sikkerhet ---
-  - trigger: numeric_state
+  - platform: numeric_state
     id: kritisk_temp
     entity_id: !input climate_entities
     attribute: current_temperature
@@ -208,23 +220,23 @@ trigger:
     for: "00:01:00"
 
   # --- Klima: endringer ---
-  - trigger: state
+  - platform: state
     id: klima_preset
     entity_id: !input climate_entities
     attribute: preset_mode
 
-  - trigger: state
+  - platform: state
     id: klima_target
     entity_id: !input climate_entities
     attribute: temperature
 
   # --- Bryter ---
-  - trigger: state
+  - platform: state
     id: varmtvann_endret
     entity_id: !input switch_entity
 
   # --- NETTUTFALL (connection) ---
-  - trigger: state
+  - platform: state
     id: nett_off
     entity_id: !input connection_sensor
     from: "on"
@@ -232,7 +244,7 @@ trigger:
     for:
       minutes: !input connection_offline_min
 
-  - trigger: state
+  - platform: state
     id: nett_on
     entity_id: !input connection_sensor
     from: "off"
@@ -241,17 +253,22 @@ trigger:
       minutes: !input connection_online_min
 
   # --- STRØMBRUDD (voltage) ---
-  - trigger: numeric_state
+  # Bruk template for å ignorere unknown/unavailable (vanlig kilde til falske varsler).
+  - platform: template
     id: power_fail
-    entity_id: !input voltage_entity
-    below: !input threshold_v
+    value_template: >
+      {{ voltage_entity
+         and states(voltage_entity) not in ['unknown','unavailable','none','']
+         and (states(voltage_entity) | float(999)) < (thr_v | float(0)) }}
     for:
       minutes: !input fail_for_min
 
-  - trigger: numeric_state
+  - platform: template
     id: power_back
-    entity_id: !input voltage_entity
-    above: !input back_threshold_v
+    value_template: >
+      {{ voltage_entity
+         and states(voltage_entity) not in ['unknown','unavailable','none','']
+         and (states(voltage_entity) | float(0)) > (back_thr | float(0)) }}
     for:
       minutes: !input back_for_min
 
@@ -270,13 +287,13 @@ action:
           - device_id: !input notify_device
             domain: mobile_app
             type: notify
-            title: "{{ location_name }}: 🚨 Lav temperatur"
+            title: "🚨 Lav temperatur på {{ location_name }}"
             message: "⚠️ {{ _name }} har nå {{ _temp }}°C, under kritisk grense."
           - if:
               - condition: template
                 value_template: "{{ debug_mode }}"
             then:
-              - action: logbook.log
+              - service: logbook.log
                 data:
                   name: "Sikom Debug"
                   message: "Kritisk temperatur varslet for {{ _name }} ({{ _temp }}°C)."
@@ -288,34 +305,33 @@ action:
             value_template: >
               {{ trigger.id == 'varmtvann_endret'
                  and (switch_entity | length) > 0
-                 and trigger.entity_id == switch_entity }}
+                 and trigger.entity_id == switch_entity
+                 and trigger.from_state is not none
+                 and trigger.to_state is not none }}
         sequence:
           - variables:
-              _old: "{{ trigger.from_state.state if trigger.from_state else 'unknown' }}"
-              _new: "{{ trigger.to_state.state if trigger.to_state else 'unknown' }}"
-              _old_dur: >-
-                {{ (as_timestamp(trigger.to_state.last_changed)
-                    - as_timestamp(trigger.from_state.last_changed)) | int }}
+              _old: "{{ trigger.from_state.state }}"
+              _new: "{{ trigger.to_state.state }}"
+              _old_dur: "{{ (as_timestamp(trigger.to_state.last_changed) - as_timestamp(trigger.from_state.last_changed)) | int }}"
+              _fname: "{{ state_attr(switch_entity, 'friendly_name') or switch_entity }}"
 
           - if:
               - condition: template
                 value_template: "{{ debug_mode }}"
             then:
-              - action: logbook.log
+              - service: logbook.log
                 data:
                   name: "Sikom Debug"
-                  message: >
-                    Bryter start: old={{ _old }} ({{ _old_dur }}s), new={{ _new }}, vindu={{ sw_min }}m
+                  message: "Bryter start: old={{ _old }} ({{ _old_dur }}s), new={{ _new }}, vindu={{ sw_min }}m"
                   entity_id: !input switch_entity
 
           # For bryter: forrige status må ha vart minst vinduet
           - condition: template
-            value_template: >
-              {{ _old_dur >= (sw_min | int) * 60 }}
+            value_template: "{{ _old_dur >= (sw_min | int) * 60 }}"
 
-          # Vent – ignorer hvis den går tilbake til _old
+          # Vent – ignorer hvis den går tilbake til _old i vinduet
           - wait_for_trigger:
-              - trigger: state
+              - platform: state
                 entity_id: !input switch_entity
                 to: "{{ _old }}"
             timeout:
@@ -326,11 +342,10 @@ action:
               - condition: template
                 value_template: "{{ debug_mode }}"
             then:
-              - action: logbook.log
+              - service: logbook.log
                 data:
                   name: "Sikom Debug"
-                  message: >
-                    Bryter etter vent: wait.completed={{ wait.completed }}, nå={{ states(switch_entity) }}
+                  message: "Bryter etter vent: wait.completed={{ wait.completed }}, nå={{ states(switch_entity) }}"
                   entity_id: !input switch_entity
 
           # Send varsel kun hvis: ikke gått tilbake + fortsatt _new + netto endring
@@ -340,24 +355,11 @@ action:
                  and is_state(switch_entity, _new)
                  and (_new != _old) }}
 
-          - if:
-              - condition: template
-                value_template: "{{ debug_mode }}"
-            then:
-              - action: logbook.log
-                data:
-                  name: "Sikom Debug"
-                  message: >
-                    Sender VARSEL (bryter): {{ state_attr(switch_entity, 'friendly_name') or switch_entity }} -> {{ 'PÅ' if _new == 'on' else 'AV' }}
-                  entity_id: !input switch_entity
-
-          - delay: "00:00:02"
-
           - device_id: !input notify_device
             domain: mobile_app
             type: notify
-            title: "{{ location_name }}: Endring registrert"
-            message: "💧 {{ state_attr(switch_entity, 'friendly_name') or switch_entity }} ble {{ 'slått PÅ' if _new == 'on' else 'slått AV' }}."
+            title: "Endring registrert på {{ location_name }}"
+            message: "💧 {{ _fname }} ble {{ 'slått PÅ' if _new == 'on' else 'slått AV' }}."
             data:
               tag: "sikom_switch_status_{{ switch_entity | replace('.', '_') }}"
 
@@ -370,37 +372,23 @@ action:
               _eid: "{{ trigger.entity_id }}"
               _old: "{{ (trigger.from_state.attributes.preset_mode if trigger.from_state else '') | string | lower | trim }}"
               _new: "{{ (trigger.to_state.attributes.preset_mode if trigger.to_state else '') | string | lower | trim }}"
+              _fname: "{{ state_attr(_eid, 'friendly_name') or _eid }}"
 
           - if:
               - condition: template
                 value_template: "{{ debug_mode }}"
             then:
-              - action: logbook.log
+              - service: logbook.log
                 data:
                   name: "Sikom Debug"
-                  message: >
-                    Preset start ({{ state_attr(_eid, 'friendly_name') or _eid }}):
-                    old='{{ _old }}' -> new='{{ _new }}', vindu={{ p_sec }}s
+                  message: "Preset start ({{ _fname }}): old='{{ _old }}' -> new='{{ _new }}', vindu={{ p_sec }}s"
                   entity_id: "{{ _eid }}"
 
-          # Vent – ignorer hvis preset går tilbake til _old
           - wait_template: >
               {{ (state_attr(_eid, 'preset_mode') | string | lower | trim) == _old }}
             timeout:
               seconds: "{{ p_sec | int }}"
             continue_on_timeout: true
-
-          - if:
-              - condition: template
-                value_template: "{{ debug_mode }}"
-            then:
-              - action: logbook.log
-                data:
-                  name: "Sikom Debug"
-                  message: >
-                    Preset etter vent: wait.completed={{ wait.completed }},
-                    nå='{{ (state_attr(_eid,'preset_mode') | string | lower | trim) }}'
-                  entity_id: "{{ _eid }}"
 
           - condition: template
             value_template: >
@@ -408,22 +396,11 @@ action:
                  and ((state_attr(_eid, 'preset_mode') | string | lower | trim) == _new)
                  and (_new != _old) }}
 
-          - if:
-              - condition: template
-                value_template: "{{ debug_mode }}"
-            then:
-              - action: logbook.log
-                data:
-                  name: "Sikom Debug"
-                  message: >
-                    Sender VARSEL (preset): {{ state_attr(_eid, 'friendly_name') or _eid }} -> '{{ _new }}'
-                  entity_id: "{{ _eid }}"
-
           - device_id: !input notify_device
             domain: mobile_app
             type: notify
-            title: "{{ location_name }}: Endring registrert"
-            message: "🔄 Modus for {{ state_attr(_eid, 'friendly_name') or _eid }} er endret til '{{ _new }}'."
+            title: "Endring registrert på {{ location_name }}"
+            message: "🔄 Modus for {{ _fname }} er endret til '{{ _new }}'."
 
       # ---------- KLIMA: temperature (setpoint) ----------
       - conditions:
@@ -434,37 +411,23 @@ action:
               _eid: "{{ trigger.entity_id }}"
               _old: "{{ (trigger.from_state.attributes.temperature if trigger.from_state else 0) | float(0) }}"
               _new: "{{ (trigger.to_state.attributes.temperature if trigger.to_state else 0) | float(0) }}"
+              _fname: "{{ state_attr(_eid, 'friendly_name') or _eid }}"
 
           - if:
               - condition: template
                 value_template: "{{ debug_mode }}"
             then:
-              - action: logbook.log
+              - service: logbook.log
                 data:
                   name: "Sikom Debug"
-                  message: >
-                    Setpoint start ({{ state_attr(_eid, 'friendly_name') or _eid }}):
-                    old={{ _old }} -> new={{ _new }}, vindu={{ t_sec }}s
+                  message: "Setpoint start ({{ _fname }}): old={{ _old }} -> new={{ _new }}, vindu={{ t_sec }}s"
                   entity_id: "{{ _eid }}"
 
-          # Vent – ignorer hvis setpoint går tilbake til _old
           - wait_template: >
               {{ (state_attr(_eid, 'temperature') | float(0)) == _old }}
             timeout:
               seconds: "{{ t_sec | int }}"
             continue_on_timeout: true
-
-          - if:
-              - condition: template
-                value_template: "{{ debug_mode }}"
-            then:
-              - action: logbook.log
-                data:
-                  name: "Sikom Debug"
-                  message: >
-                    Setpoint etter vent: wait.completed={{ wait.completed }},
-                    nå={{ (state_attr(_eid,'temperature') | float(0)) }}
-                  entity_id: "{{ _eid }}"
 
           - condition: template
             value_template: >
@@ -472,67 +435,62 @@ action:
                  and ((state_attr(_eid, 'temperature') | float(0)) == _new)
                  and (_new != _old) }}
 
-          - if:
-              - condition: template
-                value_template: "{{ debug_mode }}"
-            then:
-              - action: logbook.log
-                data:
-                  name: "Sikom Debug"
-                  message: >
-                    Sender VARSEL (setpoint): {{ state_attr(_eid, 'friendly_name') or _eid }} -> {{ _new }}°C
-                  entity_id: "{{ _eid }}"
-
           - device_id: !input notify_device
             domain: mobile_app
             type: notify
-            title: "{{ location_name }}: Endring registrert"
-            message: "🌡️ Måltemperatur for {{ state_attr(_eid, 'friendly_name') or _eid }} er endret til {{ _new }}°C."
+            title: "Endring registrert på {{ location_name }}"
+            message: "🌡️ Måltemperatur for {{ _fname }} er endret til {{ _new }}°C."
 
       # ---------- NETTUTFALL ----------
       - conditions:
           - condition: template
-            value_template: >
-              {{ trigger.id in ['nett_off','nett_on'] and (connection_sensor | length) > 0 }}
+            value_template: "{{ trigger.id in ['nett_off','nett_on'] and (connection_sensor | length) > 0 }}"
         sequence:
           - variables:
               nettnavn: "{{ state_attr(connection_sensor, 'friendly_name') or connection_sensor }}"
           - choose:
-              - conditions: "{{ trigger.id == 'nett_off' }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.id == 'nett_off' }}"
                 sequence:
                   - device_id: !input notify_device
                     domain: mobile_app
                     type: notify
-                    title: "{{ location_name }}: 🚨 NETTUTFALL"
+                    title: "🚨 NETTUTFALL på {{ location_name }}"
                     message: "⚠️ Tilkoblingen til {{ nettnavn }} er OFFLINE (≥{{ offline_min }} min)."
-              - conditions: "{{ trigger.id == 'nett_on' }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.id == 'nett_on' }}"
                 sequence:
                   - device_id: !input notify_device
                     domain: mobile_app
                     type: notify
-                    title: "{{ location_name }}: Nett tilbake"
+                    title: "Nett tilbake på {{ location_name }}"
                     message: "✅ Tilkoblingen til {{ nettnavn }} er ONLINE igjen (≥{{ online_min }} min)."
 
       # ---------- STRØMBRUDD ----------
       - conditions:
           - condition: template
-            value_template: >
-              {{ trigger.id in ['power_fail','power_back'] and (voltage_entity | length) > 0 }}
+            value_template: "{{ trigger.id in ['power_fail','power_back'] and (voltage_entity | length) > 0 }}"
         sequence:
           - variables:
               volt_navn: "{{ state_attr(voltage_entity, 'friendly_name') or voltage_entity }}"
           - choose:
-              - conditions: "{{ trigger.id == 'power_fail' }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.id == 'power_fail' }}"
                 sequence:
                   - device_id: !input notify_device
                     domain: mobile_app
                     type: notify
-                    title: "{{ location_name }}: 🚨 STRØMBRUDD"
+                    title: "🚨 STRØMBRUDD på {{ location_name }}"
                     message: "⚠️ {{ volt_navn }} < {{ thr_v }} V i ≥{{ fail_min }} min."
-              - conditions: "{{ trigger.id == 'power_back' }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.id == 'power_back' }}"
                 sequence:
                   - device_id: !input notify_device
                     domain: mobile_app
                     type: notify
-                    title: "{{ location_name }}: Strøm tilbake"
+                    title: "Strøm tilbake på {{ location_name }}"
                     message: "✅ {{ volt_navn }} > {{ back_thr }} V i ≥{{ back_min }} min."
