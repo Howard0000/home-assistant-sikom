@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented here.
 
+## [1.0.7] – 2025-12-30  
+### 🔐 Fikset – Autentisering og stabilitet mot Sikom API  
+Denne versjonen gjenoppretter stabil tilkobling mot **Sikom / Connome BPAPI** etter endringer på serversiden som kunne føre til `401/403 Authentication failed`.
+
+**Endringer:**  
+- Normaliserer passord-input (fjerner skjulte tegn ved copy/paste).  
+- Automatisk håndtering av konti som krever `!!!`-suffix på passord.  
+- Autentisering verifiseres eksplisitt via `VerifyCredentials`-endepunktet.  
+- Forbedret HTTP-headere for å unngå feilaktige `403 Forbidden`-responser.  
+- Mer robust feilhåndtering og logging ved innlogging.
+
+**Anbefaling:**  
+Alle brukere anbefales å oppdatere til **v1.0.7** dersom integrasjonen tidligere har sluttet å fungere uten lokale endringer.  
+Ingen endringer i konfigurasjon eller entiteter er nødvendig.
+
+---
+
+### 🔐 Fixed – Authentication and API stability  
+This release restores reliable connectivity to the **Sikom / Connome BPAPI** after server-side changes that could cause `401/403 Authentication failed` errors.
+
+**Changes:**  
+- Normalizes password input (removes hidden characters from copy/paste).  
+- Automatically handles accounts requiring a `!!!` password suffix.  
+- Explicit authentication verification via the `VerifyCredentials` endpoint.  
+- Improved HTTP headers to avoid erroneous `403 Forbidden` responses.  
+- More robust error handling and logging during login.
+
+**Recommendation:**  
+All users are recommended to update to **v1.0.7** if the integration stopped working without local changes.  
+No configuration or entity changes are required.
+
+
 ---
 
 ## [1.0.6] – 2025-10-28  
