@@ -1,15 +1,24 @@
 from __future__ import annotations
 
-import aiohttp
 import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
+import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER = logging.getLogger(__name__)
 
 BASE_URL = "https://api.connome.com/api/"
+
+# Headers som etterligner en "vanlig" klient (curl/browser-ish)
+DEFAULT_HEADERS = {
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "application/json,text/plain,*/*",
+    "Accept-Language": "nb-NO,nb;q=0.9,en;q=0.8",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
+}
 
 
 class ApiError(Exception):
@@ -30,7 +39,7 @@ class SikomApi:
         # Fjern skjulte tegn (copy/paste) og normaliser passord
         password = (password or "").strip()
 
-        # Bekreftet krav fra BPAPI: enkelte kontoer krever '!!!' som suffix
+        # Bekreftet: enkelte kontoer krever '!!!' som suffix
         self._password = f"{password}!!!" if not password.endswith("!!!") else password
 
         self._session: Optional[aiohttp.ClientSession] = None
@@ -44,17 +53,11 @@ class SikomApi:
         """
         Verifiserer legitimasjon mot BPAPI.
 
-        Bruker VerifyCredentials-endepunktet, som er eksplisitt ment
-        for autentiseringskontroll (og mer robust enn Device/Customer-kall).
+        Bruker VerifyCredentials-endepunktet (robust auth-sjekk).
         """
         self._ensure_session()
         self._auth = aiohttp.BasicAuth(self._username, self._password)
-
-        try:
-            await self._request("GET", "VerifyCredentials")
-        except AuthError:
-            _LOGGER.error("Innlogging mot Sikom BPAPI feilet.")
-            raise
+        await self._request("GET", "VerifyCredentials")
 
     async def list_devices(self) -> List[Dict[str, Any]]:
         """Henter og parser global enhetsliste fra /Device/All/."""
@@ -68,7 +71,7 @@ class SikomApi:
         parsed_devices = [self._parse_device(dev) for dev in device_list]
 
         seen_ids = set()
-        unique_devices = []
+        unique_devices: List[Dict[str, Any]] = []
         for device in parsed_devices:
             if device and device["id"] not in seen_ids:
                 unique_devices.append(device)
@@ -107,7 +110,6 @@ class SikomApi:
                 "type": dtype,
                 "gateway_id": gid,
             }
-
         except (KeyError, ValueError, TypeError):
             return None
 
@@ -172,18 +174,12 @@ class SikomApi:
 
         auth = self._auth or aiohttp.BasicAuth(self._username, self._password)
 
-        # Curl-lignende headers – nødvendig pga. strengere WAF-regler hos BPAPI
-        headers = {
-            "Accept": "*/*",
-            "User-Agent": "curl/8.0.0",
-        }
-
         try:
             async with self._session.request(
                 method,
                 url,
                 auth=auth,
-                headers=headers,
+                headers=DEFAULT_HEADERS,
                 timeout=aiohttp.ClientTimeout(total=30),
             ) as resp:
                 if resp.status in (401, 403):
@@ -194,10 +190,8 @@ class SikomApi:
 
         except AuthError:
             raise
-
         except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
             raise ApiError(f"API-kall feilet for {method} {url}: {exc}") from exc
-
         except Exception as exc:
             raise ApiError(f"Uventet feil for {method} {url}: {exc}") from exc
 
