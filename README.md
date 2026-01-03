@@ -127,7 +127,6 @@ Logo og navn tilhører **Sikom Connect AS** og brukes kun for identifikasjon.
 Dette er et uoffisielt community-prosjekt og er ikke utviklet, støttet, godkjent eller vedlikeholdt av Sikom Connect AS.
 All bruk skjer på eget ansvar.
 
-
 ---
 
 ### ⚠️ Ansvarsfraskrivelse
@@ -140,6 +139,7 @@ For styring av varme, spesielt i fritidsboliger, anbefales det alltid et separat
 Verken utvikler av integrasjonen eller Sikom Connect AS kan holdes ansvarlig for skader, feilfunksjon eller økonomiske tap som følge av feilkonfigurasjon, nettverksproblemer eller uforutsette API-endringer.
 
 Integrasjonen er ment som et hjelpemiddel for overvåking og automatisering i Home Assistant – ikke som primær styringsløsning for kritiske funksjoner.
+
 
 
 
