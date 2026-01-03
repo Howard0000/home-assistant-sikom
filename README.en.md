@@ -110,13 +110,21 @@ If you have a Sikom device that is not fully supported, please open an 'issue' o
 
 ## Disclaimer
 This is an unofficial, community-driven project and is not affiliated with or supported by Sikom AS. Use at your own risk. The integration depends on Sikom's current Connome API. Future changes by Sikom may affect functionality.
-The logo and name are the property of Sikom Connect AS and are used for identification purposes only.
+
 
 ## Acknowledgements
 This project is written and maintained by [@Howard0000](https://github.com/Howard0000). An AI assistant provided help with troubleshooting, code improvements, and documentation.
 
 ## License
 This project is licensed under the [MIT License](LICENSE).
+
+## Trademarks and naming
+
+The logo and name are the property of **Sikom Connect AS** and are used for identification purposes only.
+
+This is an unofficial community project and is not developed, supported, endorsed, or maintained by Sikom Connect AS.
+All use is at your own risk.
+
 
 ---
 
