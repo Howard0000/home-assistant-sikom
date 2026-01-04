@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from typing import Any, Dict
 
@@ -6,45 +7,91 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import (
-    DOMAIN, CONF_USERNAME, CONF_PASSWORD, CONF_CLIMATE_IDS, 
-    CONF_SWITCH_IDS, CONF_SENSOR_IDS
+    DOMAIN,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    CONF_CLIMATE_IDS,
+    CONF_SWITCH_IDS,
+    CONF_SENSOR_IDS,
 )
 from .coordinator import SikomDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
 PLATFORMS: list[str] = ["climate", "switch", "sensor", "binary_sensor"]
+
+
+def _to_int_keyed_map(raw: Any) -> dict[int, str]:
+    """Konverter { '591040': 'Bad' } -> { 591040: 'Bad' } (robust)."""
+    out: dict[int, str] = {}
+    if not isinstance(raw, dict):
+        return out
+
+    for k, v in raw.items():
+        try:
+            out[int(k)] = str(v)
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def _get_gateway_id(entry: ConfigEntry) -> int:
+    """Hent gateway_id fra entry.data/options (robust)."""
+    merged: Dict[str, Any] = {**entry.data, **entry.options}
+
+    # Vi lagrer gateway_id som "gateway_id" i config_flow
+    gid = merged.get("gateway_id")
+
+    if gid is None:
+        raise ValueError("Mangler gateway_id i Sikom config entry (data/options).")
+
+    try:
+        return int(gid)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Ugyldig gateway_id i Sikom config entry: {gid}") from exc
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Sett opp Sikom fra en config entry."""
     merged_options: Dict[str, Any] = {**entry.data, **entry.options}
 
+    # Viktig: Keys i entry/options er ofte str -> vi må ha int overalt internt
+    climate_map = _to_int_keyed_map(merged_options.get(CONF_CLIMATE_IDS, {}))
+    switch_map = _to_int_keyed_map(merged_options.get(CONF_SWITCH_IDS, {}))
+    sensor_map = _to_int_keyed_map(merged_options.get(CONF_SENSOR_IDS, {}))
+
     device_map = {
-        "climate": list(merged_options.get(CONF_CLIMATE_IDS, {}).keys()),
-        "switch": list(merged_options.get(CONF_SWITCH_IDS, {}).keys()),
-        "sensor": list(merged_options.get(CONF_SENSOR_IDS, {}).keys()),
+        "climate": list(climate_map.keys()),
+        "switch": list(switch_map.keys()),
+        "sensor": list(sensor_map.keys()),
     }
+
     name_map = {
-        "climate": merged_options.get(CONF_CLIMATE_IDS, {}),
-        "switch": merged_options.get(CONF_SWITCH_IDS, {}),
-        "sensor": merged_options.get(CONF_SENSOR_IDS, {}),
+        "climate": climate_map,
+        "switch": switch_map,
+        "sensor": sensor_map,
     }
+
+    gateway_id = _get_gateway_id(entry)
 
     coordinator = SikomDataCoordinator(
         hass=hass,
         entry=entry,
         username=entry.data[CONF_USERNAME],
         password=entry.data[CONF_PASSWORD],
+        gateway_id=gateway_id,
         device_map=device_map,
         name_map=name_map,
     )
+
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     entry.add_update_listener(async_reload_entry)
-    
     return True
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Fjern Sikom-integrasjonen."""
@@ -52,6 +99,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok
+
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Last inn config entry på nytt når options endres."""

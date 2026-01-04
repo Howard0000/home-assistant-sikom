@@ -44,7 +44,6 @@ class SikomClimate(CoordinatorEntity, ClimateEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
-        # Felles enhets-ID for å gruppere climate + målt temperatur-sensor i samme "Enhet"
         return DeviceInfo(
             identifiers={(DOMAIN, f"device_{self._device_id}")},
             name=self.name,
@@ -56,11 +55,14 @@ class SikomClimate(CoordinatorEntity, ClimateEntity):
         return self.coordinator.data.get("props", {}).get((self._device_id, prop))
 
     def _to_float(self, val) -> float | None:
-        if val is None: return None
-        if isinstance(val, (int, float)): return float(val)
+        if val is None:
+            return None
+        if isinstance(val, (int, float)):
+            return float(val)
         s = str(val).strip()
         m = re.search(r"[-+]?\d+(?:[.,]\d+)?", s)
-        if not m: return None
+        if not m:
+            return None
         num = m.group(0).replace(",", ".")
         try:
             return float(num)
@@ -99,17 +101,26 @@ class SikomClimate(CoordinatorEntity, ClimateEntity):
     def hvac_action(self) -> HVACAction | None:
         cur = self.current_temperature
         tgt = self.target_temperature
-        if cur is None or tgt is None: return HVACAction.IDLE
+        if cur is None or tgt is None:
+            return HVACAction.IDLE
         return HVACAction.HEATING if cur < tgt - 0.1 else HVACAction.IDLE
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         mode = 1 if preset_mode == PRESET_KOMFORT else 0
-        await self.coordinator.client.set_property_value(self._device_id, PROP_SWITCH_MODE, mode)
+        ok = await self.coordinator.client.set_property_with_confirm(self._device_id, PROP_SWITCH_MODE, mode)
+        if not ok:
+            _LOGGER.warning("Sikom: switch_mode ble ikke bekreftet for device %s (ønsket=%s)", self._device_id, mode)
         await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         temp = kwargs.get(ATTR_TEMPERATURE)
-        if temp is None: return
+        if temp is None:
+            return
+
         prop = PROP_TEMP_COMFORT if self.preset_mode == PRESET_KOMFORT else PROP_TEMP_ECO
-        await self.coordinator.client.set_property_value(self._device_id, prop, self._int_to_send(temp))
+        value = self._int_to_send(temp)
+
+        ok = await self.coordinator.client.set_property_with_confirm(self._device_id, prop, value)
+        if not ok:
+            _LOGGER.warning("Sikom: %s ble ikke bekreftet for device %s (ønsket=%s)", prop, self._device_id, value)
         await self.coordinator.async_request_refresh()

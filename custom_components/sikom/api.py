@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -11,8 +11,6 @@ _LOGGER = logging.getLogger(__name__)
 
 BASE_URL = "https://api.connome.com/api"
 
-# Headers som etterligner en "vanlig" klient (browser-ish).
-# Dette har vist seg nødvendig pga. strengere WAF-regler hos BPAPI (403 uten disse).
 DEFAULT_HEADERS: Dict[str, str] = {
     "User-Agent": "Mozilla/5.0",
     "Accept": "application/json,text/plain,*/*",
@@ -31,18 +29,12 @@ class AuthError(ApiError):
 
 
 class SikomApi:
-    """Klient for Connome / Sikom BPAPI."""
-
     def __init__(self, hass, username: str, password: str) -> None:
         self._hass = hass
-        self._username = username
+        self._username = (username or "").strip()
 
-        # Fjern skjulte tegn (copy/paste) og normaliser passord
         password = (password or "").strip()
-
-        # Bekreftet: enkelte kontoer krever '!!!' som suffix.
-        # Integrasjonen legger til dette automatisk for brukeren.
-        self._password = f"{password}!!!" if not password.endswith("!!!") else password
+        self._password = f"{password}!!!" if password and not password.endswith("!!!") else password
 
         self._session: Optional[aiohttp.ClientSession] = None
         self._auth: Optional[aiohttp.BasicAuth] = None
@@ -52,72 +44,92 @@ class SikomApi:
             self._session = async_get_clientsession(self._hass)
 
     async def login(self) -> None:
-        """Verifiserer legitimasjon mot BPAPI (VerifyCredentials)."""
         self._ensure_session()
         self._auth = aiohttp.BasicAuth(self._username, self._password)
         await self._request("GET", "VerifyCredentials")
 
-    async def list_devices(self) -> List[Dict[str, Any]]:
-        """Henter og parser global enhetsliste fra /Device/All/."""
-        response_data = await self._request("GET", "Device/All/")
-        device_list = self._find_array(response_data, candidates=["bpapi_array"])
+    # -----------------------
+    # AppView
+    # -----------------------
+    async def get_appview_all_v21(self) -> dict[str, Any] | None:
+        data = await self._request("GET", "AppView/v2.1/All")
+        if not isinstance(data, dict):
+            return None
+        d = data.get("Data")
+        if not isinstance(d, dict):
+            return None
+        result = d.get("bpapi_result")
+        return result if isinstance(result, dict) else None
 
-        if not device_list:
-            _LOGGER.error("Fikk ingen enhetsliste fra /Device/All/.")
+    async def get_gateway_id_from_v21(self) -> int | None:
+        """Plukker første gateway_id fra AppView/v2.1/All."""
+        av21 = await self.get_appview_all_v21()
+        if not isinstance(av21, dict):
+            return None
+        gateways = av21.get("gateways")
+        if not isinstance(gateways, list) or not gateways:
+            return None
+
+        gid = gateways[0].get("bpapi_gateway_id")
+        try:
+            return int(gid)
+        except (TypeError, ValueError):
+            return None
+
+    async def get_appview_v4(self, gateway_id: int) -> dict[str, Any] | None:
+        data = await self._request("GET", f"AppView/v4.0/{gateway_id}")
+        if not isinstance(data, dict):
+            return None
+        d = data.get("Data")
+        if not isinstance(d, dict):
+            return None
+        result = d.get("bpapi_result")
+        return result if isinstance(result, dict) else None
+
+    async def list_devices_from_v4(self, gateway_id: int) -> list[dict[str, Any]]:
+        """Device-liste (for clean install) fra AppView v4."""
+        av4 = await self.get_appview_v4(gateway_id)
+        if not isinstance(av4, dict):
             return []
 
-        parsed_devices = [self._parse_device(dev) for dev in device_list]
+        devices = av4.get("devices")
+        if not isinstance(devices, list):
+            return []
 
-        seen_ids: set[int] = set()
-        unique_devices: List[Dict[str, Any]] = []
-        for device in parsed_devices:
-            if device and int(device["id"]) not in seen_ids:
-                unique_devices.append(device)
-                seen_ids.add(int(device["id"]))
+        out: list[dict[str, Any]] = []
+        for dev in devices:
+            if not isinstance(dev, dict):
+                continue
 
-        _LOGGER.info("Autodeteksjon fant %d unike enheter.", len(unique_devices))
-        return unique_devices
+            did = dev.get("bpapi_device_id")
+            try:
+                did_int = int(did)
+            except (TypeError, ValueError):
+                continue
 
-    def _parse_device(self, device_data: Any) -> Dict[str, Any] | None:
-        if not isinstance(device_data, dict):
-            return None
+            name = dev.get("best_effort_name") or dev.get("product_friendly_name") or f"Enhet {did_int}"
 
-        device_info = device_data.get("device", device_data)
-        props = device_info.get("Properties")
-        if not props:
-            return None
+            # Bruk description/product_code som "type" slik at vi kan bucket’e trygt
+            dtype = dev.get("description") or dev.get("product_code") or dev.get("product_friendly_name") or ""
 
-        try:
-            bpapi_device_id = int(props["bpapi_device_id"]["Value"])
-
-            name_prop = props.get("best_effort_name") or props.get("user_defined_name")
-            name = (name_prop.get("Value") or f"Enhet {bpapi_device_id}").strip()
-
-            type_prop = (
-                props.get("vendor_and_device_model_readable")
-                or props.get("device_type_readable")
-                or props.get("device_type")
+            out.append(
+                {
+                    "id": did_int,
+                    "name": str(name).strip(),
+                    "type": str(dtype),
+                    "gateway_id": int(gateway_id),
+                    "raw": dev,  # praktisk om du vil bruke flere felter senere
+                }
             )
-            dtype = (type_prop.get("Value") or "").lower()
 
-            gid = props.get("bpapi_gateway_id", {}).get("Value")
+        _LOGGER.debug("list_devices_from_v4(%s): %s enheter", gateway_id, len(out))
+        return out
 
-            return {
-                "id": bpapi_device_id,
-                "name": name,
-                "type": dtype,
-                "gateway_id": gid,
-            }
-        except (KeyError, ValueError, TypeError):
-            return None
-
-    async def async_refresh_appview(self, gateway_id: int) -> None:
-        """Trigger AppView-refresh i skyen (skal brukes sparsomt)."""
-        await self._request("GET", f"AppView/v4.0/{gateway_id}")
-
+    # -----------------------
+    # Property/Value (legacy styring/lesing)
+    # -----------------------
     async def get_property_value(self, device_id: int, prop: str) -> Any:
         data = await self._request("GET", f"Device/{device_id}/Property/{prop}/Value")
-
         if isinstance(data, dict):
             data_node = data.get("Data")
             if isinstance(data_node, dict):
@@ -125,55 +137,42 @@ class SikomApi:
                     return scalar_val
                 if (val := data_node.get("Value")) is not None:
                     return val
-
             if (val := data.get("Value")) is not None:
                 return val
             if (val := data.get("value")) is not None:
                 return val
-
         return data
 
     async def set_property_value(self, device_id: int, prop: str, value: Any) -> None:
         await self._request("POST", f"Device/{device_id}/AddProperty/{prop}/{value}")
 
     async def set_property_with_confirm(
-        self, device_id: int, prop: str, value: Any, **kwargs: Any
+        self, device_id: int, prop: str, value: Any, *, tries: int = 10, delay_s: float = 1.0
     ) -> bool:
         try:
             await self.set_property_value(device_id, prop, value)
-            await asyncio.sleep(1.5)
-            current_value = await self.get_property_value(device_id, prop)
-            return str(current_value) == str(value)
         except Exception as exc:
-            _LOGGER.warning("Feil under set_property_with_confirm: %s", exc)
+            _LOGGER.warning("Feil ved set_property_value(%s,%s): %s", device_id, prop, exc)
             return False
 
-    def _find_array(self, data: Any, *, candidates: List[str]) -> List[Any]:
-        if isinstance(data, list):
-            return data
-        if not isinstance(data, dict):
-            return []
+        for _ in range(max(1, tries)):
+            await asyncio.sleep(delay_s)
+            try:
+                current_value = await self.get_property_value(device_id, prop)
+                if str(current_value) == str(value):
+                    return True
+            except Exception:
+                pass
+        return False
 
-        for key in candidates:
-            if isinstance(arr := data.get(key), list):
-                return arr
-
-        data_node = data.get("Data") or data.get("data")
-        if isinstance(data_node, dict):
-            for key in candidates:
-                if isinstance(arr := data_node.get(key), list):
-                    return arr
-
-        return []
-
+    # -----------------------
+    # HTTP helper
+    # -----------------------
     async def _request(self, method: str, path: str) -> Any:
-        """Utfører et API-kall mot BPAPI."""
         self._ensure_session()
         url = f"{BASE_URL}/{path.lstrip('/')}"
 
         auth = self._auth or aiohttp.BasicAuth(self._username, self._password)
-
-        # Kopi av headers pr kall (for å unngå utilsiktet mutering globalt)
         headers = dict(DEFAULT_HEADERS)
 
         try:
@@ -185,15 +184,10 @@ class SikomApi:
                 timeout=aiohttp.ClientTimeout(total=30),
             ) as resp:
                 if resp.status in (401, 403):
-                    # Prøv å hente BPAPI-melding om tilgjengelig
                     msg = f"Authentication/Access failed (status {resp.status})"
                     try:
                         data = await resp.json(content_type=None)
-                        bp_msg = (
-                            data.get("Data", {}).get("bpapi_message")
-                            if isinstance(data, dict)
-                            else None
-                        )
+                        bp_msg = data.get("Data", {}).get("bpapi_message") if isinstance(data, dict) else None
                         if bp_msg:
                             msg = f"{msg}: {bp_msg}"
                     except Exception:

@@ -28,8 +28,11 @@ class SikomSwitch(CoordinatorEntity, SwitchEntity):
     @property
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
-            identifiers={(DOMAIN, f"switch_{self._device_id}")}, name=self.name,
-            manufacturer="Sikom", model="Eco Relay")
+            identifiers={(DOMAIN, f"switch_{self._device_id}")},
+            name=self.name,
+            manufacturer="Sikom",
+            model="Eco Relay",
+        )
 
     @property
     def is_on(self) -> bool:
@@ -37,9 +40,13 @@ class SikomSwitch(CoordinatorEntity, SwitchEntity):
         return str(v) == "1"
 
     async def async_turn_on(self, **kwargs):
-        await self.coordinator.client.set_property_value(self._device_id, PROP_SWITCH_MODE, 1)
+        ok = await self.coordinator.client.set_property_with_confirm(self._device_id, PROP_SWITCH_MODE, 1)
+        if not ok:
+            _LOGGER.warning("Sikom: switch_mode ble ikke bekreftet som PÅ for device %s", self._device_id)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs):
-        await self.coordinator.client.set_property_value(self._device_id, PROP_SWITCH_MODE, 0)
+        ok = await self.coordinator.client.set_property_with_confirm(self._device_id, PROP_SWITCH_MODE, 0)
+        if not ok:
+            _LOGGER.warning("Sikom: switch_mode ble ikke bekreftet som AV for device %s", self._device_id)
         await self.coordinator.async_request_refresh()
