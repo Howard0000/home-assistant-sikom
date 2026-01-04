@@ -4,6 +4,75 @@ All notable changes to this project will be documented here.
 
 ---
 
+## [1.1.0] – 2026-01-06  
+### 🧠 Forbedret oppsett, stabilitet og datagrunnlag (AppView)
+
+Denne versjonen markerer en større intern forbedring av integrasjonen, med fokus på stabilitet, ryddigere oppstart og mer presis håndtering av data fra Sikom sitt *AppView*-endepunkt.
+
+Endringene er bakoverkompatible for de fleste brukere, men konfigurasjonsflyten og intern datamodell er forbedret sammenlignet med **1.0.x**.
+
+### Viktige forbedringer
+
+- **Ny og mer robust config flow:**
+  - Gateway (sentralenhet) identifiseres eksplisitt.
+  - Brukeren velger hvilke enheter som skal inkluderes.
+
+- **Forbedret håndtering av AppView v4.0:**
+  - Kun tilgjengelige og gyldige måleverdier opprettes som sensorer.
+  - Fjerner støy fra sensorer som tidligere ble stående som *utilgjengelig*.
+
+- **Mer presis filtrering av temperaturverdier:**
+  - Temperatursensorer opprettes kun når gyldig temperatur faktisk rapporteres.
+
+- **Ny AppView Heartbeat (diagnostisk sensor):**
+  - Bekrefter at integrasjonen mottar oppdateringer fra Sikom-skyen.
+  - Oppdateres automatisk ca. hvert **5.–6. minutt**.
+
+- Forbedret intern struktur og koordinering av API-data.
+
+### Merk
+Denne versjonen bygger videre på dagens offentlige **Connome / AppView API**.  
+Integrasjonen er gjort mer robust mot endringer i tilgjengelige felter, men fremtidige endringer i Sikom sin backend kan fortsatt påvirke funksjonalitet.
+
+### Anbefaling
+Alle brukere anbefales å oppgradere til **v1.1.0** for best stabilitet og ryddigere entitetsoppsett.
+
+---
+
+### 🧠 Improved setup, stability, and AppView handling
+
+This release introduces significant internal improvements focused on stability, clean startup behavior, and more accurate handling of data from Sikom’s *AppView* endpoint.
+
+While largely backward compatible, configuration flow and internal data handling have been improved compared to the **1.0.x** series.
+
+### Key improvements
+
+- **New and more robust configuration flow:**
+  - Explicit gateway (controller) identification.
+  - User-controlled device selection.
+
+- **Improved handling of AppView v4.0:**
+  - Sensors are only created for values that are actually available.
+  - Eliminates noisy *unavailable* entities.
+
+- **More accurate temperature handling:**
+  - Temperature sensors are created only when valid values are reported.
+
+- **New AppView Heartbeat diagnostic sensor:**
+  - Confirms ongoing communication with the Sikom cloud.
+  - Updates automatically every **~5–6 minutes**.
+
+- Improved internal structure and API coordination.
+
+### Note
+This version continues to rely on the current public **Connome / AppView API**.  
+While more resilient to API changes, future backend updates by Sikom may still affect functionality.
+
+### Recommendation
+All users are recommended to upgrade to **v1.1.0** for improved stability and cleaner entity management.
+
+---
+
 ## [1.0.8] – 2025-12-31  
 ### 🔐 Hotfix – Sikom API klientvalidering  
 
