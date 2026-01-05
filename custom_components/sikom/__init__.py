@@ -21,6 +21,25 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[str] = ["climate", "switch", "sensor", "binary_sensor"]
 
 
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate old config entries to new version."""
+    _LOGGER.debug("Migrating Sikom config entry from version %s", entry.version)
+
+    # v1 -> v2: fjern gamle/utgåtte felt (eksempel: ADRESSE)
+    if entry.version == 2:
+        data = dict(entry.data)
+        options = dict(entry.options)
+
+        # Fjern felt som ikke skal være der lenger
+        data.pop("ADRESSE", None)
+        options.pop("ADRESSE", None)
+
+        hass.config_entries.async_update_entry(entry, data=data, options=options, version=2)
+        _LOGGER.info("Migration to version 2 successful")
+
+    return True
+
+
 def _to_int_keyed_map(raw: Any) -> dict[int, str]:
     """Konverter { '591040': 'Bad' } -> { 591040: 'Bad' } (robust)."""
     out: dict[int, str] = {}
