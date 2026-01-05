@@ -1,6 +1,53 @@
 # Changelog
 
+---
+
 All notable changes to this project will be documented here.
+
+## [1.1.1] – 2026-01-06  
+### 🛠️ Fikset – Migrering for eksisterende installasjoner
+
+Denne versjonen retter et migreringsproblem som kunne oppstå ved oppgradering fra eldre versjoner til **v1.1.0**, hvor Home Assistant kunne vise *Migration Error* og midlertidig fjerne alle entiteter.
+
+### Endringer
+
+- **Automatisk migrering av eksisterende config entries**
+  - `async_migrate_entry` er nå implementert.
+  - Rydder opp i utgåtte konfigurasjonsfelt (bl.a. `ADRESSE`).
+  - Oppdaterer intern config-versjon på en trygg måte.
+
+- **Oppdatert config entry-versjon**
+  - Sikrer at Home Assistant korrekt trigget migrering ved oppgradering.
+
+### Viktig
+- **Ingen reinstallering er nødvendig** fra og med denne versjonen.
+- Brukere som allerede har slettet og lagt inn integrasjonen på nytt påvirkes ikke negativt.
+
+### Anbefaling
+Alle brukere på **v1.1.0** anbefales å oppgradere til **v1.1.1** for å sikre korrekt migrering og stabil oppstart.
+
+---
+
+### 🛠️ Fixed – Migration for existing installations
+
+This release fixes a migration issue that could occur when upgrading from older versions to **v1.1.0**, where Home Assistant could report a *Migration Error* and temporarily remove all entities.
+
+### Changes
+
+- **Automatic migration of existing config entries**
+  - `async_migrate_entry` is now implemented.
+  - Cleans up deprecated configuration fields (including `ADRESSE`).
+  - Safely updates the internal config entry version.
+
+- **Updated config entry version**
+  - Ensures Home Assistant correctly triggers migration during upgrades.
+
+### Important
+- **No reinstallation is required** starting from this version.
+- Users who have already removed and re-added the integration are not negatively affected.
+
+### Recommendation
+All users on **v1.1.0** are recommended to upgrade to **v1.1.1** to ensure proper migration and stable startup.
 
 ---
 
