@@ -4,7 +4,7 @@
 
 All notable changes to this project will be documented here.
 
-## [1.1.1] – 2026-01-06  
+## [1.1.1] – 2026-01-05  
 ### 🛠️ Fikset – Migrering for eksisterende installasjoner
 
 Denne versjonen retter et migreringsproblem som kunne oppstå ved oppgradering fra eldre versjoner til **v1.1.0**, hvor Home Assistant kunne vise *Migration Error* og midlertidig fjerne alle entiteter.
@@ -51,7 +51,7 @@ All users on **v1.1.0** are recommended to upgrade to **v1.1.1** to ensure prope
 
 ---
 
-## [1.1.0] – 2026-01-06  
+## [1.1.0] – 2026-01-04  
 ### 🧠 Forbedret oppsett, stabilitet og datagrunnlag (AppView)
 
 Denne versjonen markerer en større intern forbedring av integrasjonen, med fokus på stabilitet, ryddigere oppstart og mer presis håndtering av data fra Sikom sitt *AppView*-endepunkt.
