@@ -5,7 +5,9 @@ from typing import Any, Dict
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 
+from .api import AuthError, SikomApi
 from .const import (
     DOMAIN,
     CONF_USERNAME,
@@ -25,14 +27,32 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate old config entries to new version."""
     _LOGGER.debug("Migrating Sikom config entry from version %s", entry.version)
 
-    # v1 -> v2: fjern gamle/utgåtte felt (eksempel: ADRESSE)
-    if entry.version == 2:
+    # v1 -> v2: fjern gamle/utgåtte felt (ADRESSE) + sørg for gateway_id hvis mulig
+    if entry.version == 1:
         data = dict(entry.data)
         options = dict(entry.options)
 
         # Fjern felt som ikke skal være der lenger
         data.pop("ADRESSE", None)
         options.pop("ADRESSE", None)
+
+        # Forsøk å sette gateway_id hvis den mangler (ikke fail migrering om det ikke går)
+        merged: Dict[str, Any] = {**data, **options}
+        if merged.get("gateway_id") is None:
+            username = str(merged.get(CONF_USERNAME, "")).strip()
+            password = str(merged.get(CONF_PASSWORD, "")).strip()
+
+            if username and password:
+                try:
+                    api = SikomApi(hass, username, password)
+                    await api.login()
+                    gid = await api.get_gateway_id_from_v21()
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.warning("Kunne ikke hente gateway_id under migrering: %s", exc)
+                    gid = None
+
+                if gid is not None:
+                    data["gateway_id"] = int(gid)
 
         hass.config_entries.async_update_entry(entry, data=data, options=options, version=2)
         _LOGGER.info("Migration to version 2 successful")
@@ -57,8 +77,6 @@ def _to_int_keyed_map(raw: Any) -> dict[int, str]:
 def _get_gateway_id(entry: ConfigEntry) -> int:
     """Hent gateway_id fra entry.data/options (robust)."""
     merged: Dict[str, Any] = {**entry.data, **entry.options}
-
-    # Vi lagrer gateway_id som "gateway_id" i config_flow
     gid = merged.get("gateway_id")
 
     if gid is None:
@@ -91,13 +109,40 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "sensor": sensor_map,
     }
 
-    gateway_id = _get_gateway_id(entry)
+    # Hent brukernavn/passord robust (kan ligge i options hvis senere endret)
+    username = str(merged_options.get(CONF_USERNAME, "")).strip()
+    password = str(merged_options.get(CONF_PASSWORD, "")).strip()
+
+    # --- gateway_id: først normalt, deretter self-heal hvis mangler ---
+    try:
+        gateway_id = _get_gateway_id(entry)
+    except ValueError:
+        _LOGGER.warning("gateway_id mangler i config entry – forsøker å hente automatisk via API")
+
+        if not username or not password:
+            raise ConfigEntryNotReady("Mangler brukernavn/passord for å hente gateway_id")
+
+        try:
+            api = SikomApi(hass, username, password)
+            await api.login()
+            gid = await api.get_gateway_id_from_v21()
+        except AuthError as exc:
+            raise ConfigEntryNotReady(f"Autentisering feilet ved henting av gateway_id: {exc}") from exc
+        except Exception as exc:  # noqa: BLE001
+            raise ConfigEntryNotReady(f"Feil ved henting av gateway_id: {exc}") from exc
+
+        if gid is None:
+            raise ConfigEntryNotReady("Kunne ikke hente gateway_id fra Sikom API")
+
+        # Lagre gateway_id tilbake i entry.data så dette kun skjer én gang
+        hass.config_entries.async_update_entry(entry, data={**entry.data, "gateway_id": int(gid)})
+        gateway_id = int(gid)
 
     coordinator = SikomDataCoordinator(
         hass=hass,
         entry=entry,
-        username=entry.data[CONF_USERNAME],
-        password=entry.data[CONF_PASSWORD],
+        username=username,
+        password=password,
         gateway_id=gateway_id,
         device_map=device_map,
         name_map=name_map,

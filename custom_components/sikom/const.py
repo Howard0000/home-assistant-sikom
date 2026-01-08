@@ -13,31 +13,25 @@ CONF_CLIMATE_IDS = "climate_ids"
 CONF_SWITCH_IDS = "switch_ids"
 CONF_SENSOR_IDS = "sensor_ids"
 
-# "id:name" alias-kart
-CONF_CLIMATE_NAMES = "climate_names"
-CONF_SWITCH_NAMES = "switch_names"
-CONF_SENSOR_NAMES = "sensor_names"
+# Device properties (fra Sikom/AppView)
+PROP_SWITCH_MODE = "switch_mode"          # "0"/"1"
+PROP_TEMP = "temperature"                # aktuell temp eller settpunkt (avhengig av device)
+PROP_TEMP_ECO = "temperature_eco"        # eco-settpunkt
+PROP_TEMP_COMFORT = "temperature_comfort"  # comfort-settpunkt
 
-# Sikom property names
-PROP_SWITCH_MODE = "switch_mode"
-PROP_TEMP = "temperature"
-PROP_TEMP_COMFORT = "temperature_comfort"
-PROP_TEMP_ECO = "temperature_eco"
-
-# Default fallbacks hvis API ikke gir settpunkt
-DEFAULT_ECO_TEMP = 10.0
+# Default fallback-settpunkter hvis Sikom ikke gir verdier (brukes i climate.py)
+DEFAULT_ECO_TEMP = 16.0
 DEFAULT_COMFORT_TEMP = 21.0
 
-# ******** OPPDATERT LISTE MED KORREKTE NAVN ********
-# Hvilke strømmåler-verdier vi prøver å hente
-SENSOR_PROPS = [
+# Sensorfelter vi ønsker å hente ut hvis de finnes på enheter (typisk AMS/ECO-AMS osv.)
+SENSOR_PROPS: list[str] = [
     # Generiske navn
     "current_power_usage",
     "power_voltage",
     "current",
     "energy",
 
-    # AMS-spesifikke navn
+    # AMS-spesifikke navn (ECO-AMS)
     "ams_current_power_usage",
     "ams_cumulative_imported_energy",
     "ams_cumulative_plus_calculated_energy_today",

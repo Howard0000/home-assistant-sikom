@@ -157,6 +157,9 @@ async def async_setup_entry(
 
     # IKKE lag temperatur for relé (switch). Den er "X" hos deg og skaper støy.
 
+    # Alarm-melding (diagnostikk) – kun hvis alarmfelt finnes i controller
+    entities.append(SikomGatewayAlarmMessageSensor(coordinator))
+
     # Heartbeat / diagnostikk
     entities.append(SikomAppViewHeartbeatSensor(coordinator, entry.entry_id))
 
@@ -256,6 +259,42 @@ class SikomMeasuredTempSensor(CoordinatorEntity, SensorEntity):
             return False
         raw = (self.coordinator.data or {}).get("props", {}).get((self._device_id, "temperature"))
         return _to_float_safe(raw) is not None
+
+
+class SikomGatewayAlarmMessageSensor(CoordinatorEntity, SensorEntity):
+    """Alarmmelding fra gateway/controller (diagnostikk)."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Alarm melding"
+    _attr_icon = "mdi:alert"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator)
+        gateway_id = getattr(coordinator, "gateway_id", "unknown")
+        self._attr_unique_id = f"sikom_gateway_alarm_message_{gateway_id}"
+
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"gateway_{gateway_id}")},
+            name="Sikom Gateway",
+            manufacturer="Sikom",
+            model="Sikom Connect / AppView",
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        msg = (self.coordinator.data or {}).get("_alarm_notification_message")
+        if msg is None:
+            return None
+        s = str(msg).strip()
+        return s or None
+
+    @property
+    def available(self) -> bool:
+        if not super().available:
+            return False
+        # Tilgjengelig når feltet finnes i controller (selv om meldingen kan være tom)
+        return (self.coordinator.data or {}).get("_alarm_notification_message") is not None
 
 
 class SikomAppViewHeartbeatSensor(CoordinatorEntity, SensorEntity):
