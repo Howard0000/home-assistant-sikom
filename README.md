@@ -108,6 +108,39 @@ https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://ra
 
 ---
 
+## 🔄 Oppgradering fra eldre versjoner
+
+Ved oppgradering fra eldre versjoner av Sikom-integrasjonen (for eksempel `v1.0.x` eller tidlige `v1.1.x`)
+kan det forekomme at **inaktive eller gamle enheter blir liggende igjen** i Home Assistant.
+
+Dette er forventet oppførsel og skyldes forbedringer i:
+- bruk av stabile `unique_id`
+- intern struktur for enheter og entiteter
+- mer korrekt kobling mellom Sikom-enheter og Home Assistant-entiteter
+
+Home Assistant sletter **ikke** gamle enheter automatisk når en integrasjon endrer intern struktur.
+
+### Anbefalt engangsopprydding
+
+For et helt ryddig og konsistent oppsett anbefales følgende **én gang etter oppgradering**:
+
+1. Gå til **Innstillinger → Enheter og tjenester → Sikom**
+2. Velg **Slett integrasjon**
+3. Legg til Sikom-integrasjonen på nytt
+
+Dette vil normalt **ikke påvirke**:
+- automasjoner
+- scripts
+- dashboards
+
+Så lenge de samme enhetene finnes, vil Home Assistant automatisk koble alt tilbake
+ved hjelp av integrasjonens stabile `unique_id`.
+
+⚠️ **Merk:**  
+Historikk for entiteter vil bli nullstilt når integrasjonen slettes og legges til på nytt.
+
+---
+
 ## Konfigurasjon
 
 1. **Innstillinger → Enheter og tjenester**
@@ -161,3 +194,4 @@ For varme i fritidsboliger anbefales alltid et separat system for **frostsikring
 
 Integrasjonen er ment for overvåking og automatisering – ikke som primær
 styringsløsning for kritiske funksjoner.
+
