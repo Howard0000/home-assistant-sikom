@@ -108,6 +108,39 @@ https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://ra
 
 ---
 
+## 🔄 Upgrading from older versions
+
+When upgrading from older versions of the Sikom integration (such as `v1.0.x` or early `v1.1.x`),
+you may notice inactive or legacy devices remaining in Home Assistant.
+
+This is expected behavior and is caused by improvements in:
+- stable `unique_id` usage
+- internal device and entity structure
+- more accurate mapping between Sikom devices and Home Assistant entities
+
+Home Assistant does **not automatically remove old devices** when an integration changes its internal structure.
+
+### Recommended one-time cleanup
+
+For a fully clean and consistent setup, it is recommended to perform the following **once after upgrading**:
+
+1. Go to **Settings → Devices & Services → Sikom**
+2. Select **Delete integration**
+3. Add the Sikom integration again
+
+This will normally **not** affect:
+- automations
+- scripts
+- dashboards
+
+As long as the same devices are present, Home Assistant will automatically reconnect everything
+using the integration’s stable `unique_id`s.
+
+⚠️ **Note:**  
+Entity history will be reset when the integration is removed and re-added.
+
+---
+
 ## Configuration
 
 1. **Settings → Devices & Services**
