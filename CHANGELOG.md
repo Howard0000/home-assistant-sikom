@@ -4,6 +4,70 @@
 
 All notable changes to this project will be documented here.
 
+## [1.1.2] – 2026-01-08  
+### 🧹 Stabilisering og opprydding etter større interne endringer
+
+Denne versjonen fullfører arbeidet som startet i **v1.1.0–v1.1.1**, med fokus på stabilitet, forutsigbar oppgradering og ryddigere håndtering av enheter og entiteter i Home Assistant.
+
+### Endringer
+
+- **Stabil og konsistent bruk av `unique_id`**
+  - Sikrer at entiteter gjenkjennes korrekt ved oppgradering og reinstallasjon.
+  - Hindrer at nye duplikater opprettes ved senere oppgraderinger.
+
+- **Forbedret håndtering av eldre installasjoner**
+  - Bedre samspill mellom eksisterende config entries og ny intern struktur.
+  - Mer robust oppstart etter oppgradering fra både `v1.0.x` og `v1.1.1`.
+
+- **Oppdatert blueprint**
+  - Tilpasset ny entitetsstruktur og forbedret varsling.
+
+### Viktig informasjon
+
+Ved oppgradering fra eldre versjoner kan **inaktive eller gamle enheter bli liggende igjen** i Home Assistant.
+Dette er forventet oppførsel, da Home Assistant ikke sletter enheter automatisk når intern struktur endres.
+
+For et helt ryddig oppsett anbefales det å **slette og legge til integrasjonen på nytt én gang**.
+Dette vil normalt **ikke påvirke automasjoner, scripts eller dashboards**, da integrasjonen benytter stabile `unique_id`.
+
+### Anbefaling
+
+Denne versjonen anbefales for alle brukere som har oppgradert fra tidligere **1.0.x** eller **1.1.x**-versjoner.
+
+---
+
+## [1.1.2] – 2026-01-08  
+### 🧹 Stabilization and cleanup after major internal changes
+
+This release completes the work introduced in **v1.1.0–v1.1.1**, focusing on stability, predictable upgrades, and cleaner handling of devices and entities in Home Assistant.
+
+### Changes
+
+- **Stable and consistent `unique_id` usage**
+  - Ensures entities are correctly recognized during upgrades and reinstalls.
+  - Prevents new duplicate entities from being created in future upgrades.
+
+- **Improved handling of existing installations**
+  - Better interaction between existing config entries and the new internal structure.
+  - More robust startup after upgrading from both `v1.0.x` and `v1.1.1`.
+
+- **Updated blueprint**
+  - Adapted to the new entity structure and improved notifications.
+
+### Important information
+
+When upgrading from older versions, **inactive or legacy devices may remain** in Home Assistant.
+This is expected behavior, as Home Assistant does not automatically remove devices when an integration’s internal structure changes.
+
+For a fully clean setup, it is recommended to **remove and re-add the integration once**.
+This will normally **not affect automations, scripts, or dashboards**, as the integration uses stable `unique_id`s.
+
+### Recommendation
+
+This release is recommended for all users upgrading from earlier **1.0.x** or **1.1.x** versions.
+
+---
+
 ## [1.1.1] – 2026-01-05  
 ### 🛠️ Fikset – Migrering for eksisterende installasjoner
 
