@@ -9,6 +9,9 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 _LOGGER = logging.getLogger(__name__)
 
+# Logg kun én gang per oppstart dersom vi auto-appender !!!
+_PASSWORD_EXCLAMATION_LOGGED = False
+
 BASE_URL = "https://api.connome.com/api"
 
 DEFAULT_HEADERS: Dict[str, str] = {
@@ -34,11 +37,23 @@ class SikomApi:
         self._username = (username or "").strip()
 
         password = (password or "").strip()
-        self._password = f"{password}!!!" if password and not password.endswith("!!!") else password
+
+        global _PASSWORD_EXCLAMATION_LOGGED
+        appended = bool(password) and not password.endswith("!!!")
+        self._password = f"{password}!!!" if appended else password
+
+        if appended and not _PASSWORD_EXCLAMATION_LOGGED:
+            _LOGGER.debug(
+                "SikomApi: appended '!!!' to password automatically (for compatibility)"
+            )
+            _PASSWORD_EXCLAMATION_LOGGED = True
 
         self._session: Optional[aiohttp.ClientSession] = None
         self._auth: Optional[aiohttp.BasicAuth] = None
 
+    # -----------------------
+    # Session / auth
+    # -----------------------
     def _ensure_session(self) -> None:
         if self._session is None or self._session.closed:
             self._session = async_get_clientsession(self._hass)
@@ -66,6 +81,7 @@ class SikomApi:
         av21 = await self.get_appview_all_v21()
         if not isinstance(av21, dict):
             return None
+
         gateways = av21.get("gateways")
         if not isinstance(gateways, list) or not gateways:
             return None
@@ -107,10 +123,18 @@ class SikomApi:
             except (TypeError, ValueError):
                 continue
 
-            name = dev.get("best_effort_name") or dev.get("product_friendly_name") or f"Enhet {did_int}"
+            name = (
+                dev.get("best_effort_name")
+                or dev.get("product_friendly_name")
+                or f"Enhet {did_int}"
+            )
 
-            # Bruk description/product_code som "type" slik at vi kan bucket’e trygt
-            dtype = dev.get("description") or dev.get("product_code") or dev.get("product_friendly_name") or ""
+            dtype = (
+                dev.get("description")
+                or dev.get("product_code")
+                or dev.get("product_friendly_name")
+                or ""
+            )
 
             out.append(
                 {
@@ -118,7 +142,7 @@ class SikomApi:
                     "name": str(name).strip(),
                     "type": str(dtype),
                     "gateway_id": int(gateway_id),
-                    "raw": dev,  # praktisk om du vil bruke flere felter senere
+                    "raw": dev,
                 }
             )
 
@@ -126,7 +150,7 @@ class SikomApi:
         return out
 
     # -----------------------
-    # Property/Value (legacy styring/lesing)
+    # Property / Value
     # -----------------------
     async def get_property_value(self, device_id: int, prop: str) -> Any:
         data = await self._request("GET", f"Device/{device_id}/Property/{prop}/Value")
@@ -147,12 +171,20 @@ class SikomApi:
         await self._request("POST", f"Device/{device_id}/AddProperty/{prop}/{value}")
 
     async def set_property_with_confirm(
-        self, device_id: int, prop: str, value: Any, *, tries: int = 10, delay_s: float = 1.0
+        self,
+        device_id: int,
+        prop: str,
+        value: Any,
+        *,
+        tries: int = 10,
+        delay_s: float = 1.0,
     ) -> bool:
         try:
             await self.set_property_value(device_id, prop, value)
         except Exception as exc:
-            _LOGGER.warning("Feil ved set_property_value(%s,%s): %s", device_id, prop, exc)
+            _LOGGER.warning(
+                "Feil ved set_property_value(%s,%s): %s", device_id, prop, exc
+            )
             return False
 
         for _ in range(max(1, tries)):
@@ -187,7 +219,11 @@ class SikomApi:
                     msg = f"Authentication/Access failed (status {resp.status})"
                     try:
                         data = await resp.json(content_type=None)
-                        bp_msg = data.get("Data", {}).get("bpapi_message") if isinstance(data, dict) else None
+                        bp_msg = (
+                            data.get("Data", {}).get("bpapi_message")
+                            if isinstance(data, dict)
+                            else None
+                        )
                         if bp_msg:
                             msg = f"{msg}: {bp_msg}"
                     except Exception:

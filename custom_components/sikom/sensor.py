@@ -26,23 +26,35 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 
 
-def _to_float_safe(val: Any) -> float | None:
-    """Parse tall fra str/Any. Returnerer None for 'X'/tom/ikke-tall."""
-    if val is None:
+def _to_float_safe(value: Any) -> float | None:
+    """Konverter '10.4', 10, '10,4', etc -> float. Returner None på tekst/X/ugyldig."""
+    if value is None:
         return None
-    s = str(val).strip()
-    if not s or s.upper() == "X":
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    s = str(value).strip()
+    if not s:
         return None
-    m = re.search(r"[-+]?\d+(?:[.,]\d+)?", s)
+
+    # Typiske ikke-tall som dukker opp i Connôme/Sikom-data
+    if s.upper() == "X":
+        return None
+
+    # Fjern evt. enheter og rare strenger
+    # (vi vil kun ha numeriske prober her)
+    s = s.replace(",", ".")
+    m = re.search(r"-?\d+(\.\d+)?", s)
     if not m:
         return None
+
     try:
-        return float(m.group(0).replace(",", "."))
-    except (ValueError, TypeError):
+        return float(m.group(0))
+    except ValueError:
         return None
 
 
-SENSOR_DESCRIPTIONS: dict[str, SensorEntityDescription] = {
+METER_SENSOR_DESCRIPTIONS: dict[str, SensorEntityDescription] = {
     "power_usage": SensorEntityDescription(
         key="power_usage",
         name="Strømforbruk",
@@ -78,16 +90,16 @@ SENSOR_DESCRIPTIONS: dict[str, SensorEntityDescription] = {
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
-    "energy_total": SensorEntityDescription(
-        key="energy_total",
-        name="Energi importert (total)",
+    "energy_today": SensorEntityDescription(
+        key="energy_today",
+        name="Energi i dag",
         device_class=SensorDeviceClass.ENERGY,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
-    "energy_today": SensorEntityDescription(
-        key="energy_today",
-        name="Energi i dag",
+    "energy_total": SensorEntityDescription(
+        key="energy_total",
+        name="Energi importert (total)",
         device_class=SensorDeviceClass.ENERGY,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         state_class=SensorStateClass.TOTAL,
@@ -97,6 +109,14 @@ SENSOR_DESCRIPTIONS: dict[str, SensorEntityDescription] = {
 MEASURED_TEMP_DESC = SensorEntityDescription(
     key="measured_temp",
     name="Målt temperatur",
+    device_class=SensorDeviceClass.TEMPERATURE,
+    native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    state_class=SensorStateClass.MEASUREMENT,
+)
+
+RELAY_PROBE_TEMP_DESC = SensorEntityDescription(
+    key="relay_probe_temp",
+    name="Temperaturprobe",
     device_class=SensorDeviceClass.TEMPERATURE,
     native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     state_class=SensorStateClass.MEASUREMENT,
@@ -128,7 +148,9 @@ def _props_keys_for_device(coordinator, device_id: int) -> set[str]:
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[SensorEntity] = []
@@ -143,7 +165,10 @@ async def async_setup_entry(
             if not any(c in available_keys for c in candidates):
                 continue
 
-            desc = SENSOR_DESCRIPTIONS[metric_key]
+            desc = METER_SENSOR_DESCRIPTIONS.get(metric_key)
+            if not desc:
+                continue
+
             entities.append(SikomMeterMetricSensor(coordinator, did, desc, candidates))
 
     # Målt temperatur for termostater: kun hvis temperature finnes og ikke er "X"
@@ -155,9 +180,17 @@ async def async_setup_entry(
             continue
         entities.append(SikomMeasuredTempSensor(coordinator, did))
 
-    # IKKE lag temperatur for relé (switch). Den er "X" hos deg og skaper støy.
+    # Temperaturprobe på relé (switch): opprett kun hvis relé-enheten rapporterer numerisk temperature
+    # (f.eks. 10.4). Verdier som "X" eller tekst ignoreres for å unngå støy.
+    for device_id in coordinator.device_map.get("switch", []):
+        did = int(device_id)
+        props = (coordinator.data or {}).get("props", {})
+        raw = props.get((did, "temperature"))
+        if _to_float_safe(raw) is None:
+            continue
+        entities.append(SikomRelayProbeTempSensor(coordinator, did))
 
-    # Alarm-melding (diagnostikk) – kun hvis alarmfelt finnes i controller
+    # Alarm-melding (diagnostikk)
     entities.append(SikomGatewayAlarmMessageSensor(coordinator))
 
     # Heartbeat / diagnostikk
@@ -167,8 +200,6 @@ async def async_setup_entry(
 
 
 class SikomMeterMetricSensor(CoordinatorEntity, SensorEntity):
-    _attr_has_entity_name = True
-
     def __init__(
         self,
         coordinator,
@@ -179,50 +210,35 @@ class SikomMeterMetricSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._device_id = int(device_id)
         self.entity_description = description
-        self._candidates = list(candidates)
+        self._candidates = candidates
 
-        device_name = coordinator.name_map.get("sensor", {}).get(self._device_id) or f"Sikom Meter {self._device_id}"
-
-        # ✅ behold samme unique_id-format som før
-        self._attr_unique_id = f"sikom_sensor_{self._device_id}_{description.key}"
+        base_name = coordinator.name_map.get("sensor", {}).get(self._device_id) or f"Sikom Energy Meter {self._device_id}"
+        self._base_name = base_name
+        self._attr_unique_id = f"sikom_meter_{self._device_id}_{description.key}"
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"device_{self._device_id}")},
-            name=device_name,
+            name=base_name,
             manufacturer="Sikom",
-            model="ECO Energy Controller (AMS)",
+            model="Energy Meter",
         )
 
-    def _first_present(self) -> tuple[str | None, Any | None]:
-        props = (self.coordinator.data or {}).get("props", {})
-        for prop in self._candidates:
-            key = (self._device_id, prop)
-            if key in props:
-                return prop, props.get(key)
-        return None, None
+    @property
+    def name(self) -> str:
+        return f"{self._base_name} {self.entity_description.name}"
 
     @property
     def native_value(self) -> float | None:
-        _, raw = self._first_present()
-        parsed = _to_float_safe(raw)
-        if parsed is None:
-            return None
-
-        # Energi i AppView ser ut som Wh hos deg → kWh i HA
-        if (
-            self.device_class == SensorDeviceClass.ENERGY
-            and self.native_unit_of_measurement == UnitOfEnergy.KILO_WATT_HOUR
-        ):
-            return parsed / 1000.0
-
-        return parsed
-
-    @property
-    def available(self) -> bool:
-        if not super().available:
-            return False
-        prop, raw = self._first_present()
-        return prop is not None and _to_float_safe(raw) is not None
+        props = (self.coordinator.data or {}).get("props", {})
+        for key in self._candidates:
+            raw = props.get((self._device_id, key))
+            v = _to_float_safe(raw)
+            if v is not None:
+                # AppView leverer ofte Wh for energi; konverter til kWh her
+                if self.entity_description.device_class == SensorDeviceClass.ENERGY:
+                    return v / 1000.0
+                return v
+        return None
 
 
 class SikomMeasuredTempSensor(CoordinatorEntity, SensorEntity):
@@ -255,10 +271,43 @@ class SikomMeasuredTempSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def available(self) -> bool:
-        if not super().available:
-            return False
+        return super().available
+
+
+class SikomRelayProbeTempSensor(CoordinatorEntity, SensorEntity):
+    """Temperatur fra ekstern probe koblet til et relé (f.eks. Eco Controller 3 4G)."""
+
+    _attr_has_entity_name = True
+    entity_description = RELAY_PROBE_TEMP_DESC
+
+    def __init__(self, coordinator, device_id: int) -> None:
+        super().__init__(coordinator)
+        self._device_id = int(device_id)
+
+        base_name = coordinator.name_map.get("switch", {}).get(self._device_id) or f"Sikom Relay {self._device_id}"
+        self._base_name = base_name
+        self._attr_unique_id = f"sikom_relay_probe_temp_{self._device_id}"
+
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"device_{self._device_id}")},
+            name=base_name,
+            manufacturer="Sikom",
+            model="Switch/Relay",
+        )
+
+    @property
+    def name(self) -> str:
+        return f"{self._base_name} {self.entity_description.name}"
+
+    @property
+    def native_value(self) -> float | None:
         raw = (self.coordinator.data or {}).get("props", {}).get((self._device_id, "temperature"))
-        return _to_float_safe(raw) is not None
+        return _to_float_safe(raw)
+
+    @property
+    def available(self) -> bool:
+        # Følg coordinator/gateway. Manglende verdi blir bare "Ukjent".
+        return super().available
 
 
 class SikomGatewayAlarmMessageSensor(CoordinatorEntity, SensorEntity):
@@ -291,10 +340,8 @@ class SikomGatewayAlarmMessageSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def available(self) -> bool:
-        if not super().available:
-            return False
-        # Tilgjengelig når feltet finnes i controller (selv om meldingen kan være tom)
-        return (self.coordinator.data or {}).get("_alarm_notification_message") is not None
+        # Følg coordinator/gateway. Manglende alarmtekst gir "Ukjent", ikke utilgjengelig.
+        return super().available
 
 
 class SikomAppViewHeartbeatSensor(CoordinatorEntity, SensorEntity):
