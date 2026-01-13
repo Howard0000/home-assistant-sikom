@@ -4,6 +4,89 @@
 
 All notable changes to this project will be documented here.
 
+## [1.1.4] – 2026-01-13
+### 🌡️ Forbedret støtte for temperaturprober (Eco Controller 3 4G) + stabilisering
+
+Denne versjonen reintroduserer og verifiserer støtte for **kablede temperaturprober på Eco Controller 3 4G** i den nye AppView-baserte arkitekturen (v1.1.x).
+
+Endringene er basert på faktiske AppView-data og testing fra brukere med tilkoblede prober.
+
+### Endringer
+
+- **Temperaturprober på relé-utganger**
+  - Temperatursensor opprettes automatisk når et relé rapporterer numerisk `temperature`-verdi.
+  - Reléer uten probe (eller uten numerisk verdi) ignoreres korrekt.
+  - Ingen “tomme” eller tekstbaserte temperatursensorer opprettes.
+
+- **Bevart og gjenopprettet alarm-tekst**
+  - Alarmmelding på alarminngang vises nå korrekt igjen.
+  - Filtrering av tekstverdier påvirker ikke alarm-relaterte sensorer.
+
+- **Mer presis filtrering av AppView-data**
+  - Kun felter som faktisk eksisterer i AppView-responsen eksponeres som entiteter.
+  - Reduserer støy, *unavailable* og misvisende sensorer.
+
+- **Forutsigbar oppførsel ved reinstallasjon**
+  - Ved sletting og ny installasjon opprettes kun aktive og gyldige enheter.
+  - Eldre/legacy-entiteter fra tidligere versjoner blir ikke med videre.
+
+### Viktig informasjon
+
+- Denne versjonen endrer **ikke** historikk eller `unique_id` ved vanlig oppgradering.
+- Full reinstallasjon vil, som alltid i Home Assistant, gi nytt og ryddig entitetsoppsett,
+  men uten historikk fra tidligere entiteter.
+
+### Status
+
+- Testet mot:
+  - Eco Controller 3 4G **med** temperaturprobe
+  - Eco Controller 3 4G **uten** temperaturprobe
+- Anbefales først som **pre-release** før endelig stabil utgivelse.
+
+---
+
+## [1.1.4] – 2026-01-13
+### 🌡️ Improved temperature probe support (Eco Controller 3 4G) + stabilization
+
+This release reintroduces and validates support for **wired temperature probes on Eco Controller 3 4G**
+within the new AppView-based architecture introduced in v1.1.x.
+
+Changes are based on real AppView responses and user testing with connected probes.
+
+### Changes
+
+- **Temperature probes on relay outputs**
+  - Temperature sensors are created automatically when a relay reports a numeric `temperature` value.
+  - Relays without probes (or without numeric values) are correctly ignored.
+  - No empty or text-based temperature entities are created.
+
+- **Restored alarm message handling**
+  - Alarm text from the alarm input is now correctly exposed again.
+  - Text filtering does not affect alarm-related sensors.
+
+- **More accurate AppView data filtering**
+  - Only fields actually present in the AppView response are exposed as entities.
+  - Reduces noise, unavailable, and misleading sensors.
+
+- **Predictable behavior on reinstallation**
+  - Removing and re-adding the integration creates only valid, active entities.
+  - Legacy entities from older versions are not carried forward.
+
+### Important information
+
+- This release does **not** affect history or `unique_id` during normal upgrades.
+- As with all Home Assistant integrations, a full reinstall results in a clean setup
+  without historical data from previous entities.
+
+### Status
+
+- Tested with:
+  - Eco Controller 3 4G **with** temperature probe
+  - Eco Controller 3 4G **without** temperature probe
+- Recommended as a **pre-release** before final stable release.
+
+---
+
 ## [1.1.2] – 2026-01-08  
 ### 🧹 Stabilisering og opprydding etter større interne endringer
 
