@@ -4,7 +4,7 @@
 
 All notable changes to this project will be documented here.
 
-## [1.1.4] – 2026-01-13
+## [1.1.4] – 2026-01-21
 ### 🌡️ Forbedret støtte for temperaturprober (Eco Controller 3 4G) + stabilisering
 
 Denne versjonen reintroduserer og verifiserer støtte for **kablede temperaturprober på Eco Controller 3 4G** i den nye AppView-baserte arkitekturen (v1.1.x).
@@ -45,7 +45,7 @@ Endringene er basert på faktiske AppView-data og testing fra brukere med tilkob
 
 ---
 
-## [1.1.4] – 2026-01-13
+## [1.1.4] – 2026-01-21
 ### 🌡️ Improved temperature probe support (Eco Controller 3 4G) + stabilization
 
 This release reintroduces and validates support for **wired temperature probes on Eco Controller 3 4G**
