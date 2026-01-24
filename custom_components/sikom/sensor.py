@@ -262,7 +262,9 @@ class SikomMeasuredTempSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def name(self) -> str:
-        return f"{self._base_name} {self.entity_description.name}"
+        # Når _attr_has_entity_name=True skal vi kun returnere "entity-navnet".
+        # Device-navnet (base_name) kommer fra device registry og settes sammen av HA.
+        return self.entity_description.name
 
     @property
     def native_value(self) -> float | None:
@@ -297,7 +299,9 @@ class SikomRelayProbeTempSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def name(self) -> str:
-        return f"{self._base_name} {self.entity_description.name}"
+        # Når _attr_has_entity_name=True skal vi kun returnere "entity-navnet".
+        # Device-navnet (base_name) kommer fra device registry og settes sammen av HA.
+        return self.entity_description.name
 
     @property
     def native_value(self) -> float | None:
