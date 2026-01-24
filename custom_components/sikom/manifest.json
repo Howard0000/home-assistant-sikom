@@ -7,8 +7,9 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/Howard0000/home-assistant-sikom/issues",
   "requirements": [],
-  "version": "1.1.4"
+  "version": "1.1.5"
 }
+
 
 
 
