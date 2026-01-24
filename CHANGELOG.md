@@ -4,6 +4,83 @@
 
 All notable changes to this project will be documented here.
 
+## [1.1.5] – 2026-01-24  
+### 🧹 Forbedret navngivning av entiteter (entity naming cleanup)
+
+Denne versjonen rydder opp i hvordan **device-navn og entitetsnavn kombineres** i Home Assistant, og forhindrer at samme navn blir gjentatt flere ganger i nye entiteter.
+
+Endringen er gjort i tråd med Home Assistant sine anbefalte retningslinjer for `has_entity_name`.
+
+### Endringer
+
+- **Korrigert navngivning av temperatursensorer**
+  - *Målt temperatur* og *temperaturprobe* bruker nå kun entitetsnavn, og lar Home Assistant kombinere dette korrekt med device-navn.
+  - Forhindrer nye entiteter med doble navn som f.eks.  
+    `panelovner_hytte_panelovner_hytte_temperaturprobe`.
+
+- **Ryddigere visning av gateway-entiteter**
+  - Gateway-tilkobling vises nå som **«Tilkobling»** under *Sikom Gateway*.
+  - Gir mer konsistent og forutsigbar presentasjon i UI.
+
+- **Ingen endringer i `unique_id` eller historikk**
+  - Eksisterende entiteter og historikk påvirkes ikke ved vanlig oppgradering.
+  - Ingen automasjoner eller dashboards brytes.
+
+### Viktig informasjon
+
+- Home Assistant endrer **ikke eksisterende `entity_id` automatisk**.
+  - Installasjoner som er oppgradert over tid kan derfor fortsatt ha eldre `entity_id` med doble navn.
+  - Dette er en begrensning i Home Assistant sin entity registry og kan ikke løses automatisk uten å bryte historikk.
+
+- For helt nye installasjoner (eller nye entiteter som opprettes etter oppgradering) vil navngivningen nå være korrekt og ryddig.
+
+### Status
+
+- Testet på:
+  - Eksisterende installasjoner med historikk
+  - Ren test-installasjon (ny config entry)
+- Anbefalt som **stabil utgivelse**.
+
+---
+
+## [1.1.5] – 2026-01-24  
+### 🧹 Entity naming cleanup
+
+This release improves how **device names and entity names are combined** in Home Assistant, preventing duplicated base names in newly created entities.
+
+The changes follow Home Assistant’s recommended usage of `has_entity_name`.
+
+### Changes
+
+- **Corrected naming for temperature sensors**
+  - *Measured temperature* and *relay temperature probe* sensors now rely solely on the entity name, allowing Home Assistant to combine it correctly with the device name.
+  - Prevents new entities with duplicated names such as  
+    `panelovner_hytte_panelovner_hytte_temperaturprobe`.
+
+- **Cleaner gateway entity presentation**
+  - Gateway connectivity is now shown as **“Tilkobling”** under *Sikom Gateway*.
+  - Provides a more consistent and predictable UI.
+
+- **No changes to `unique_id` or history**
+  - Existing entities and history are not affected by normal upgrades.
+  - No automations or dashboards are broken.
+
+### Important information
+
+- Home Assistant does **not automatically rename existing `entity_id`s**.
+  - Installations upgraded over time may therefore retain older entity IDs with duplicated names.
+  - This is expected Home Assistant behavior and cannot be changed automatically without breaking history.
+
+- New installations (or newly created entities after upgrading) will now use clean and correct naming.
+
+### Status
+
+- Tested on:
+  - Existing installations with historical data
+  - Clean test installations (new config entry)
+- Recommended as a **stable release**.
+
+
 ## [1.1.4] – 2026-01-21
 ### 🌡️ Forbedret støtte for temperaturprober (Eco Controller 3 4G) + stabilisering
 
