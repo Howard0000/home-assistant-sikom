@@ -2,7 +2,7 @@
 
 [Norsk](README.md) · **English**
 
-![HACS](https://img.shields.io/badge/HACS-Default-orange.svg)
+[![HACS](https://img.shields.io/badge/HACS-Default-green.svg)](https://hacs.xyz/) 
 
 A modern, robust, and user-friendly integration for connecting Sikom devices  
 (thermostats, relays, and AMS meters) to Home Assistant.
