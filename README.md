@@ -2,7 +2,7 @@
 
 **Norsk** · [English](README.en.md)
 
-![HACS](https://img.shields.io/badge/HACS-Default-orange.svg)
+[![HACS](https://img.shields.io/badge/HACS-Default-green.svg)](https://hacs.xyz/) 
 
 En moderne, robust og brukervennlig integrasjon for å koble Sikom-enheter  
 (termostater, releer og AMS-målere) til Home Assistant.
@@ -194,4 +194,5 @@ For varme i fritidsboliger anbefales alltid et separat system for **frostsikring
 
 Integrasjonen er ment for overvåking og automatisering – ikke som primær
 styringsløsning for kritiske funksjoner.
+
 
