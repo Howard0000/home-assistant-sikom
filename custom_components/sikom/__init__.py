@@ -26,7 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[str] = ["climate", "switch", "sensor", "binary_sensor"]
 
 # "Pakkenavn" for å gjøre feilsøking enklere i GitHub-issues
-_REGISTRY_CLEANUP_TAG = "v1.1.3-registry-cleanup"
+_REGISTRY_CLEANUP_TAG = "registry-cleanup"
 
 # Entiteter vi IKKE lenger støtter/bygger i v1.1.x, men som kan ligge igjen fra v1.0.8
 _DEPRECATED_UNIQUE_ID_PREFIXES = (
@@ -176,8 +176,11 @@ async def _migrate_registry_links(hass: HomeAssistant, entry: ConfigEntry) -> No
 
     # --- 2) Bygg oppslag: (kind,id) -> device_entry.id ---
     by_kind_id: dict[tuple[str, int], str] = {}
-    for dev in dev_reg.devices.values():
-        for (domain, ident) in dev.identifiers:
+    for dev in dev_reg.devices:
+        for identifier in dev.identifiers:
+            if len(identifier) < 2:
+                continue
+            domain, ident = identifier[0], identifier[1]
             if domain != DOMAIN:
                 continue
             parsed = _parse_sikom_identifier(str(ident))
@@ -192,12 +195,15 @@ async def _migrate_registry_links(hass: HomeAssistant, entry: ConfigEntry) -> No
         if not e.device_id:
             continue
 
-        dev = dev_reg.devices.get(e.device_id)
+        dev = dev_reg.async_get(e.device_id)
         if not dev:
             continue
 
         legacy_id: int | None = None
-        for (domain, ident) in dev.identifiers:
+        for identifier in dev.identifiers:
+            if len(identifier) < 2:
+                continue
+            domain, ident = identifier[0], identifier[1]
             if domain != DOMAIN:
                 continue
             parsed = _parse_sikom_identifier(str(ident))
@@ -238,13 +244,16 @@ async def _migrate_registry_links(hass: HomeAssistant, entry: ConfigEntry) -> No
     def _device_is_used(device_id: str) -> bool:
         return any(ent.device_id == device_id for ent in ent_reg.entities.values())
 
-    for dev in list(dev_reg.devices.values()):
-        if entry.entry_id not in dev.config_entries:
+    for dev in list(dev_reg.devices):
+        if dev.config_entry_id != entry.entry_id:
             continue
 
         legacy_kind: str | None = None
         legacy_id: int | None = None
-        for (domain, ident) in dev.identifiers:
+        for identifier in dev.identifiers:
+            if len(identifier) < 2:
+                continue
+            domain, ident = identifier[0], identifier[1]
             if domain != DOMAIN:
                 continue
             parsed = _parse_sikom_identifier(str(ident))
