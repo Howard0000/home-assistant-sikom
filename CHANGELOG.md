@@ -4,6 +4,60 @@
 
 All notable changes to this project will be documented here.
 
+## [1.1.6] – 2026-09-19  
+### 🛠️ Home Assistant Device Registry-kompatibilitet
+
+Denne versjonen oppdaterer Sikom-integrasjonen for nyere endringer i Home Assistant sitt Device Registry API.
+
+### Endringer
+
+- **Oppdatert Device Registry-håndtering**
+  - Erstatter utdaterte mapping-kall mot `device_registry.devices` med støttede API-er.
+  - Oppdaterer håndtering av tilknytning mellom devices og config entries.
+
+- **Mer robust registry-opprydding**
+  - Identifier-håndteringen tåler nå registry-data med flere verdier uten å feile med `too many values to unpack`.
+  - Fjerner den misvisende hardkodede loggtaggen `v1.1.3-registry-cleanup`.
+
+- **Ingen funksjonelle endringer i Sikom-styringen**
+  - Ingen endringer i `unique_id`, entiteter eller konfigurasjon.
+  - Ingen reinstallasjon er nødvendig.
+
+### Status
+
+- Testet på Home Assistant **2026.9.3**.
+- Testet med flere restarter og lengre drift uten nye Sikom-feil i loggen.
+- Verifisert kommunikasjon begge veier: **Home Assistant → Sikom** og **Sikom/app → Home Assistant**.
+
+---
+
+## [1.1.6] – 2026-09-19  
+### 🛠️ Home Assistant Device Registry compatibility
+
+This release updates the Sikom integration for recent Home Assistant Device Registry API changes.
+
+### Changes
+
+- **Updated Device Registry handling**
+  - Replaces deprecated mapping access to `device_registry.devices` with supported APIs.
+  - Updates handling of device-to-config-entry relationships.
+
+- **More robust registry cleanup**
+  - Identifier handling now tolerates registry data containing additional values without failing with `too many values to unpack`.
+  - Removes the misleading hard-coded `v1.1.3-registry-cleanup` log tag.
+
+- **No functional changes to Sikom control**
+  - No changes to `unique_id`, entities, or configuration.
+  - No reinstallation is required.
+
+### Status
+
+- Tested on Home Assistant **2026.9.3**.
+- Tested across multiple restarts and extended runtime without new Sikom errors in the log.
+- Bidirectional communication verified: **Home Assistant → Sikom** and **Sikom/app → Home Assistant**.
+
+---
+
 ## [1.1.5] – 2026-01-24  
 ### 🧹 Forbedret navngivning av entiteter (entity naming cleanup)
 
