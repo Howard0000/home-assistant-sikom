@@ -2,6 +2,28 @@
 
 ---
 
+## [1.1.7] – 2026-11-18
+### 🔌 Valgfri relédiagnostikk og Home Assistant-kompatibilitet
+
+- To nye diagnostikkentiteter for termostater, **deaktivert som standard**: **Reléstatus** (`switch_state.Value`) og **Siste rapporterte reléendring** (`switch_state.Created`).
+- Leser Sikoms `Device/All` bare når minst én av disse entitetene er aktivert, og høyst én gang hvert femte minutt. Begge deler samme API-oppslag.
+- Relédata er sist rapporterte verdier fra Sikom. Forsinkelse og korte sykluser mellom avlesninger kan gi ufullstendig driftstidshistorikk. `hvac_action` er fortsatt temperaturbasert.
+- Erstatter de utgåtte climate-egenskapene `_attr_temperature_unit`, `current_temperature` og `target_temperature` med deres `native_`-alternativer for kompatibilitet med kommende Home Assistant-versjoner.
+- Testet på HA Test med SI-3 og SI-4. Begge diagnostikkentiteter er testet separat, og femminuttersbegrensningen er bekreftet i logg.
+
+---
+
+## [1.1.7] – 2026-11-18
+### 🔌 Optional relay diagnostics and Home Assistant compatibility
+
+- Adds two thermostat diagnostic entities, **disabled by default**: **Relay status** (`switch_state.Value`) and **Last reported relay change** (`switch_state.Created`).
+- Requests Sikom `Device/All` only while at least one diagnostic entity is enabled, at most once every five minutes. Both share the same request.
+- Relay values are Sikom-reported, potentially delayed, and short cycles between polls may be missed. `hvac_action` remains temperature-based.
+- Replaces deprecated climate properties `_attr_temperature_unit`, `current_temperature`, and `target_temperature` with their `native_` counterparts for future Home Assistant compatibility.
+- Tested on HA Test with SI-3 and SI-4. Both diagnostic entities were tested independently, and the five-minute limit was confirmed in logs.
+
+---
+
 All notable changes to this project will be documented here.
 
 ## [1.1.6] – 2026-09-19  

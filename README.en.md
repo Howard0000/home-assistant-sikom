@@ -39,6 +39,17 @@ For devices that report actual temperature (e.g. *SI-4*, *Eco Glamox Receiver*, 
 For *Eco Controller 3* with wired temperature probes, one temperature sensor per relay is created
 (e.g. *Temperature Relay 1* and *Temperature Relay 2*).
 
+### Relay diagnostics (new in v1.1.7)
+
+Two optional diagnostic entities are created for thermostats, **disabled by default**:
+
+- **Relay status** (`binary_sensor`): last reported on/off state from Sikom's `Device/All` field `switch_state.Value`.
+- **Last reported relay change** (`sensor`, timestamp): `switch_state.Created` from the Sikom API.
+
+Enable the desired entity under **Settings → Devices & Services → Sikom → device → Entities**. When at least one is enabled, the integration makes at most one additional `Device/All` request every five minutes. Both entities share the same request. When neither is enabled, no additional `Device/All` requests are made for relay diagnostics.
+
+**Important:** These are values reported by Sikom, not direct physical measurements of the relay. Reporting can be delayed, and short on/off cycles between polls can be missed. Do not treat these readings as exact runtime or energy-consumption measurements. The existing `hvac_action` indicator remains temperature-based and is not equivalent to the reported relay state.
+
 ### Automatic updates
 The integration performs an *AppView* request to the Sikom API approximately every **5–6 minutes**, keeping
 temperature, power, and status values up to date without needing to open the Sikom mobile app.

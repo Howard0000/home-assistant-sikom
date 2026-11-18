@@ -39,6 +39,17 @@ For enheter som rapporterer faktisk temperatur (f.eks. *SI-4*, *Eco Glamox Recei
 For *Eco Controller 3* med kablede temperaturfølere opprettes én temperatursensor per relé
 (f.eks. *Temperatur Relé 1* og *Temperatur Relé 2*).
 
+### Relédiagnostikk (nytt i v1.1.7)
+
+For termostater opprettes to valgfrie diagnostikkentiteter, **deaktivert som standard**:
+
+- **Reléstatus** (`binary_sensor`): sist rapporterte av/på-status fra Sikoms `Device/All`-felt `switch_state.Value`.
+- **Siste rapporterte reléendring** (`sensor`, tidsstempel): `switch_state.Created` fra Sikom API.
+
+Aktiver ønsket entitet under **Innstillinger → Enheter og tjenester → Sikom → enheten → Entiteter**. Når minst én av disse er aktivert, gjør integrasjonen høyst ett ekstra `Device/All`-oppslag hvert femte minutt. Begge entitetene benytter samme oppslag. Når ingen er aktivert, utføres ingen ekstra `Device/All`-oppslag for relédiagnostikken.
+
+**Viktig:** Dette er verdier rapportert av Sikom, ikke direkte fysisk måling av reléet. Rapporteringen kan være forsinket, og korte på/av-sykluser mellom avlesningene kan bli oversett. Dataene bør derfor ikke brukes som eksakt måling av driftstid eller energiforbruk. Den eksisterende `hvac_action`-indikatoren er fremdeles temperaturbasert og er ikke det samme som rapportert reléstatus.
+
 ### Automatisk oppdatering
 Integrasjonen sender et *AppView*-kall til Sikom API omtrent hvert **5.–6. minutt**, slik at
 temperatur, effekt og status holdes oppdatert uten at Sikom-appen må åpnes.
