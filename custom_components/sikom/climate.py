@@ -27,7 +27,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     async_add_entities(entities)
 
 class SikomClimate(CoordinatorEntity, ClimateEntity):
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE
     _attr_hvac_modes = [HVACMode.HEAT]
     _attr_preset_modes = [PRESET_SPARING, PRESET_KOMFORT]
@@ -76,7 +76,7 @@ class SikomClimate(CoordinatorEntity, ClimateEntity):
         return int(round(float(v)))
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         return self._get_prop_float(PROP_TEMP)
 
     @property
@@ -90,7 +90,7 @@ class SikomClimate(CoordinatorEntity, ClimateEntity):
         return self._get_prop_float(PROP_TEMP_ECO) or DEFAULT_ECO_TEMP
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         return self._comfort_target() if self.preset_mode == PRESET_KOMFORT else self._eco_target()
 
     @property
@@ -99,8 +99,8 @@ class SikomClimate(CoordinatorEntity, ClimateEntity):
 
     @property
     def hvac_action(self) -> HVACAction | None:
-        cur = self.current_temperature
-        tgt = self.target_temperature
+        cur = self.native_current_temperature
+        tgt = self.native_target_temperature
         if cur is None or tgt is None:
             return HVACAction.IDLE
         return HVACAction.HEATING if cur < tgt - 0.1 else HVACAction.IDLE

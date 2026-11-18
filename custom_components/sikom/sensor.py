@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from typing import Any
 import re
 
@@ -196,6 +198,12 @@ async def async_setup_entry(
     # Heartbeat / diagnostikk
     entities.append(SikomAppViewHeartbeatSensor(coordinator, entry.entry_id))
 
+    # Valgfri diagnostikk; deaktivert som standard.
+    entities.extend(
+        SikomRelayCreatedSensor(coordinator, int(did))
+        for did in coordinator.device_map.get("climate", [])
+    )
+
     async_add_entities(entities)
 
 
@@ -361,3 +369,58 @@ class SikomAppViewHeartbeatSensor(CoordinatorEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         return (self.coordinator.data or {}).get("_appview_heartbeat")
+
+
+class SikomRelayCreatedSensor(CoordinatorEntity, SensorEntity):
+    """Sikoms Created-tid for rapportert reléstatus; ikke fysisk verifisert."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Siste rapporterte reléendring"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_enabled_default = False
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_icon = "mdi:clock-outline"
+
+    def __init__(self, coordinator, device_id: int) -> None:
+        super().__init__(coordinator)
+        self._device_id = device_id
+        self._attr_unique_id = f"sikom_relay_created_{device_id}"
+        name = coordinator.name_map.get("climate", {}).get(device_id) or f"Sikom Thermostat {device_id}"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"device_{device_id}")},
+            name=name,
+            manufacturer="Sikom",
+            model="Thermostat",
+        )
+
+    def _relay(self) -> dict | None:
+        return (self.coordinator.data or {}).get("_relay_states", {}).get(self._device_id)
+
+    @property
+    def native_value(self) -> datetime | None:
+        relay = self._relay()
+        if relay is None:
+            return None
+        raw = relay.get("created")
+        if not isinstance(raw, str) or not raw.strip():
+            return None
+        try:
+            result = datetime.fromisoformat(raw.strip().replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        return result if result.tzinfo is not None else None
+
+    @property
+    def available(self) -> bool:
+        return super().available and self.native_value is not None
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        relay = self._relay()
+        if relay is None:
+            return {}
+        return {
+            "sikom_last_valid": relay.get("last_valid"),
+            "sikom_relay_value": relay.get("value"),
+            "source": "Sikom Device/All switch_state.Created",
+        }
